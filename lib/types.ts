@@ -1,7 +1,16 @@
-export const RECIPE_CATEGORIES = ["Breakfast", "Lunch", "Dinner", "Dessert"] as const;
+export const RECIPE_CATEGORIES = [
+  "Breakfast",
+  "Lunch",
+  "Dinner",
+  "Dessert",
+] as const;
 export type RecipeCategory = (typeof RECIPE_CATEGORIES)[number];
 
-export type SortOption = "alphabetAsc" | "alphabetDesc" | "dateAsc" | "dateDesc";
+export type SortOption =
+  | "alphabetAsc"
+  | "alphabetDesc"
+  | "dateAsc"
+  | "dateDesc";
 
 export interface Recipe {
   id: string;

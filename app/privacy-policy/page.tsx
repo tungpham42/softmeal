@@ -1,3 +1,44 @@
 import type { Metadata } from "next";
 export const metadata: Metadata = { title: "Privacy Policy" };
-export default function PrivacyPolicyPage() { return <article className="mx-auto max-w-4xl rounded-[2rem] border border-border bg-card p-6 shadow-sm sm:p-8"><div className="prose-viet"><h1 className="font-serif text-4xl font-bold text-lacquer">Privacy Policy</h1><p className="mt-2 text-sm text-muted">Cập nhật: 04 tháng 10 năm 2026</p><h2>Thông tin chúng tôi thu thập</h2><p>Chúng tôi có thể lưu email, tên hiển thị và thông tin tài khoản khi bạn đăng ký/đăng nhập; dữ liệu công thức bạn gửi; và các bình luận bạn đăng.</p><h2>Cách sử dụng thông tin</h2><p>Dữ liệu được dùng để xác thực tài khoản, hiển thị công thức và bình luận, duy trì hồ sơ người dùng và cải thiện trải nghiệm.</p><h2>Dịch vụ bên thứ ba</h2><p>Bếp Việt sử dụng Firebase cho xác thực và Firestore, Cloudinary cho lưu trữ ảnh, và có thể dùng Google Analytics/Tag Manager cho thống kê truy cập.</p><h2>Thông tin công khai</h2><p>Công thức và bình luận được đăng trên nền tảng có thể được người dùng khác xem. Không đăng thông tin nhạy cảm vào nội dung công thức hoặc bình luận.</p><h2>Liên hệ</h2><p>Đối với yêu cầu về dữ liệu cá nhân, hãy sử dụng kênh liên hệ được công bố trên website.</p></div></article>; }
+export default function PrivacyPolicyPage() {
+  return (
+    <article className="mx-auto max-w-4xl rounded-[2rem] border border-border bg-card p-6 shadow-sm sm:p-8">
+      <div className="prose-viet">
+        <h1 className="font-serif text-4xl font-bold text-lacquer">
+          Privacy Policy
+        </h1>
+        <p className="mt-2 text-sm text-muted">
+          Cập nhật: 04 tháng 10 năm 2026
+        </p>
+        <h2>Thông tin chúng tôi thu thập</h2>
+        <p>
+          Chúng tôi có thể lưu email, tên hiển thị và thông tin tài khoản khi
+          bạn đăng ký/đăng nhập; dữ liệu công thức bạn gửi; và các bình luận bạn
+          đăng.
+        </p>
+        <h2>Cách sử dụng thông tin</h2>
+        <p>
+          Dữ liệu được dùng để xác thực tài khoản, hiển thị công thức và bình
+          luận, duy trì hồ sơ người dùng và cải thiện trải nghiệm.
+        </p>
+        <h2>Dịch vụ bên thứ ba</h2>
+        <p>
+          Bếp Việt sử dụng Firebase cho xác thực và Firestore, Cloudinary cho
+          lưu trữ ảnh, và có thể dùng Google Analytics/Tag Manager cho thống kê
+          truy cập.
+        </p>
+        <h2>Thông tin công khai</h2>
+        <p>
+          Công thức và bình luận được đăng trên nền tảng có thể được người dùng
+          khác xem. Không đăng thông tin nhạy cảm vào nội dung công thức hoặc
+          bình luận.
+        </p>
+        <h2>Liên hệ</h2>
+        <p>
+          Đối với yêu cầu về dữ liệu cá nhân, hãy sử dụng kênh liên hệ được công
+          bố trên website.
+        </p>
+      </div>
+    </article>
+  );
+}

@@ -1,6 +1,11 @@
 import Icon from "@/components/ui/Icon";
 
-export default function Pagination({ itemsPerPage, totalItems, currentPage, onPageChange }: {
+export default function Pagination({
+  itemsPerPage,
+  totalItems,
+  currentPage,
+  onPageChange,
+}: {
   itemsPerPage: number;
   totalItems: number;
   currentPage: number;
@@ -17,10 +22,44 @@ export default function Pagination({ itemsPerPage, totalItems, currentPage, onPa
   if (pageCount > 1) pages.push(pageCount);
 
   return (
-    <nav className="mt-8 flex items-center justify-center gap-1" aria-label="Phân trang">
-      <button type="button" disabled={currentPage === 1} onClick={() => onPageChange(currentPage - 1)} className="page-button" aria-label="Trang trước"><Icon name="chevron-left" size={17} /></button>
-      {pages.map((page, index) => page === "ellipsis" ? <span className="px-2 text-muted" key={`ellipsis-${index}`}>…</span> : <button type="button" key={page} onClick={() => onPageChange(page)} className={`page-button ${page === currentPage ? "page-button-active" : ""}`}>{page}</button>)}
-      <button type="button" disabled={currentPage === pageCount} onClick={() => onPageChange(currentPage + 1)} className="page-button" aria-label="Trang sau"><Icon name="chevron-right" size={17} /></button>
+    <nav
+      className="mt-8 flex items-center justify-center gap-1"
+      aria-label="Phân trang"
+    >
+      <button
+        type="button"
+        disabled={currentPage === 1}
+        onClick={() => onPageChange(currentPage - 1)}
+        className="page-button"
+        aria-label="Trang trước"
+      >
+        <Icon name="chevron-left" size={17} />
+      </button>
+      {pages.map((page, index) =>
+        page === "ellipsis" ? (
+          <span className="px-2 text-muted" key={`ellipsis-${index}`}>
+            …
+          </span>
+        ) : (
+          <button
+            type="button"
+            key={page}
+            onClick={() => onPageChange(page)}
+            className={`page-button ${page === currentPage ? "page-button-active" : ""}`}
+          >
+            {page}
+          </button>
+        ),
+      )}
+      <button
+        type="button"
+        disabled={currentPage === pageCount}
+        onClick={() => onPageChange(currentPage + 1)}
+        className="page-button"
+        aria-label="Trang sau"
+      >
+        <Icon name="chevron-right" size={17} />
+      </button>
     </nav>
   );
 }

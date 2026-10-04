@@ -7,7 +7,7 @@ const labels: Record<string, string> = {
 };
 
 export function categoryLabel(category?: string) {
-  return category ? labels[category] ?? category : "Ẩm thực Việt";
+  return category ? (labels[category] ?? category) : "Ẩm thực Việt";
 }
 
 export const categoryAccent: Record<string, string> = {
