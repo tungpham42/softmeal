@@ -24,6 +24,18 @@ export default function WeeklySuggestions() {
   const [plan, setPlan] = useState<Array<{ day: string; meals: Recipe[] }>>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [currentDayIndex, setCurrentDayIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    // JavaScript: Sunday = 0, Monday = 1, ..., Saturday = 6
+    // Convert to our days array: Monday = 0, ..., Sunday = 6
+    const timeoutId = window.setTimeout(() => {
+      const jsDay = new Date().getDay();
+      setCurrentDayIndex(jsDay === 0 ? 6 : jsDay - 1);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, []);
 
   useEffect(() => {
     void fetchRecipes()
@@ -41,6 +53,15 @@ export default function WeeklySuggestions() {
       ),
     [recipes],
   );
+
+  const orderedPlan = useMemo(() => {
+    if (currentDayIndex === null) return plan;
+
+    return [
+      ...plan.filter((_, index) => index === currentDayIndex),
+      ...plan.filter((_, index) => index !== currentDayIndex),
+    ];
+  }, [plan, currentDayIndex]);
 
   function generate() {
     setGenerating(true);
@@ -61,6 +82,7 @@ export default function WeeklySuggestions() {
   }, [recipes.length, active, pools]);
 
   if (loading) return <LoadingBlock label="Đang chuẩn bị thực đơn tuần..." />;
+
   if (!recipes.length)
     return (
       <div className="notice-info">
@@ -75,15 +97,19 @@ export default function WeeklySuggestions() {
           <span className="eyebrow">
             <Icon name="calendar" size={15} /> Lên mâm cả tuần
           </span>
+
           <h1 className="section-title">Gợi ý công thức theo tuần</h1>
+
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
             Chọn các nhóm món bạn muốn xuất hiện, rồi để Bếp Việt bốc thực đơn
             ngẫu nhiên.
           </p>
         </div>
+
         <div className="flex flex-wrap gap-2">
           {RECIPE_CATEGORIES.map((category) => {
             const selected = active.includes(category);
+
             return (
               <button
                 key={category}
@@ -102,6 +128,7 @@ export default function WeeklySuggestions() {
               </button>
             );
           })}
+
           <button
             type="button"
             onClick={generate}
@@ -115,18 +142,22 @@ export default function WeeklySuggestions() {
       </div>
 
       <div className="grid gap-4">
-        {plan.map((dayPlan, index) => (
+        {orderedPlan.map((dayPlan, index) => (
           <details
             key={dayPlan.day}
-            open={index === 0}
+            open={
+              currentDayIndex !== null && dayPlan.day === days[currentDayIndex]
+            }
             className="group rounded-3xl border border-border bg-card shadow-sm"
           >
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 font-serif text-xl font-bold text-lacquer [&::-webkit-details-marker]:hidden">
               <span>{dayPlan.day}</span>
+
               <span className="grid size-9 place-items-center rounded-full bg-gold/15 text-turmeric-700 transition group-open:rotate-180">
                 <Icon name="chevron-right" size={17} />
               </span>
             </summary>
+
             <div className="border-t border-border px-5 py-4">
               {dayPlan.meals.length ? (
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -142,9 +173,11 @@ export default function WeeklySuggestions() {
                         </span>
                         {categoryLabel(recipe.category)}
                       </div>
+
                       <div className="font-serif text-lg font-bold text-ink">
                         {recipe.title}
                       </div>
+
                       <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">
                         {recipe.description}
                       </p>
@@ -163,6 +196,7 @@ export default function WeeklySuggestions() {
     </section>
   );
 }
+
 function createPlan(
   days: string[],
   active: string[],
@@ -172,7 +206,9 @@ function createPlan(
     day,
     meals: active.flatMap((category) => {
       const pool = pools.get(category) ?? [];
+
       if (!pool.length) return [];
+
       return [pool[Math.floor(Math.random() * pool.length)]];
     }),
   }));
