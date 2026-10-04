@@ -1,6 +1,23 @@
 import type { Metadata } from "next";
 import Icon from "@/components/ui/Icon";
-export const metadata: Metadata = { title: "Hướng dẫn sử dụng" };
+export const metadata: Metadata = {
+  title: "Hướng dẫn sử dụng",
+  description:
+    "Hướng dẫn nhanh để tìm món, chia sẻ công thức và tham gia cộng đồng.",
+  openGraph: {
+    title: "Hướng dẫn sử dụng",
+    description:
+      "Hướng dẫn nhanh để tìm món, chia sẻ công thức và tham gia cộng đồng.",
+    images: [
+      {
+        url: "/huong-dan.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Hướng dẫn nhanh để tìm món, chia sẻ công thức và tham gia cộng đồng.",
+      },
+    ],
+  },
+};
 const sections = [
   {
     title: "Bắt đầu",
