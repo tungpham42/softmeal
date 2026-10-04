@@ -1,0 +1,129 @@
+"use client";
+
+import type { FormEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import type { Recipe } from "@/lib/types";
+import { createRecipe, fetchRecipeBySlug, recipeSlugExists, saveRecipe } from "@/lib/firebase/data";
+import { uploadImageToCloudinary } from "@/lib/cloudinary";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { categoryLabel, RECIPE_CATEGORIES } from "@/lib/category";
+import slugify from "@/lib/slug";
+import Icon from "@/components/ui/Icon";
+import Alert, { LoadingBlock } from "@/components/ui/Alert";
+import RequireAuth from "@/components/auth/RequireAuth";
+
+function EditorForm({ mode, slug }: { mode: "create" | "edit"; slug?: string }) {
+  const router = useRouter();
+  const { currentUser } = useAuth();
+  const [initialLoading, setInitialLoading] = useState(mode === "edit");
+  const [recipeId, setRecipeId] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [ingredients, setIngredients] = useState("");
+  const [steps, setSteps] = useState("");
+  const [category, setCategory] = useState("Dinner");
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (mode !== "edit" || !slug) return;
+    void fetchRecipeBySlug(slug).then((recipe) => {
+      if (!recipe) { setError("Không tìm thấy công thức để chỉnh sửa."); return; }
+      setRecipeId(recipe.id);
+      setTitle(recipe.title);
+      setDescription(recipe.description);
+      setIngredients(recipe.ingredients.join("\n"));
+      setSteps(recipe.steps.join("\n"));
+      setCategory(recipe.category);
+      setYoutubeUrl(recipe.youtubeUrl ?? "");
+      setImageUrl(recipe.imageUrl ?? "");
+    }).catch(() => setError("Không thể tải công thức." )).finally(() => setInitialLoading(false));
+  }, [mode, slug]);
+
+  const generatedSlug = useMemo(() => slugify(title), [title]);
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!currentUser) return;
+    setBusy(true); setError(""); setSuccess("");
+    try {
+      const finalSlug = await (async () => {
+        let base = generatedSlug || `mon-${Date.now()}`;
+        if (!(await recipeSlugExists(base, recipeId || undefined))) return base;
+        let index = 2;
+        while (await recipeSlugExists(`${base}-${index}`, recipeId || undefined)) index += 1;
+        return `${base}-${index}`;
+      })();
+
+      let finalImage = imageUrl.trim();
+      if (imageFile) finalImage = await uploadImageToCloudinary(imageFile);
+      const payload: Partial<Recipe> = {
+        title: title.trim(), description: description.trim(), category,
+        ingredients: ingredients.split("\n").map((x) => x.trim()).filter(Boolean),
+        steps: steps.split("\n").map((x) => x.trim()).filter(Boolean),
+        youtubeUrl: youtubeUrl.trim(), imageUrl: finalImage,
+        slug: finalSlug,
+      };
+      if (mode === "create") payload.userId = currentUser.uid;
+
+      if (mode === "edit") {
+        await saveRecipe(recipeId, payload);
+      } else {
+        await createRecipe(payload as Omit<Recipe, "id">);
+      }
+      setSuccess(mode === "edit" ? "Đã cập nhật công thức." : "Đã thêm công thức mới.");
+      window.setTimeout(() => router.push(`/cong-thuc/${finalSlug}`), 500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Không thể lưu công thức.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (initialLoading) return <LoadingBlock label="Đang mở công thức..." />;
+
+  return (
+    <div className="mx-auto max-w-4xl">
+      <div className="mb-7 flex flex-col gap-2"><span className="eyebrow"><Icon name={mode === "edit" ? "edit" : "plus"} size={15} /> Sổ tay bếp</span><h1 className="section-title">{mode === "edit" ? "Chỉnh sửa công thức" : "Thêm công thức"}</h1><p className="text-sm leading-6 text-muted">Ghi lại món ngon theo cách dễ đọc, dễ nấu và dễ truyền lại cho người thân.</p></div>
+      <div className="rounded-[2rem] border border-border bg-card p-5 shadow-sm sm:p-8">
+        {error && <div className="mb-5"><Alert tone="danger">{error}</Alert></div>}
+        {success && <div className="mb-5"><Alert tone="success">{success}</Alert></div>}
+        <form onSubmit={submit} className="space-y-6">
+          <div className="grid gap-5 md:grid-cols-2">
+            <label className="block md:col-span-2"><span className="form-label"><Icon name="bowl" size={15} /> Tên món / tiêu đề</span><input value={title} onChange={(e) => setTitle(e.target.value)} className="form-input" required placeholder="Ví dụ: Phở bò gia truyền" /></label>
+            <label className="block md:col-span-2"><span className="form-label"><Icon name="book" size={15} /> Mô tả</span><textarea value={description} onChange={(e) => setDescription(e.target.value)} className="form-input min-h-28" required placeholder="Một vài câu giới thiệu về món ăn, dịp thường nấu hoặc hương vị đặc trưng..." /></label>
+            <label className="block"><span className="form-label"><Icon name="tag" size={15} /> Danh mục</span><select value={category} onChange={(e) => setCategory(e.target.value)} className="form-input">{RECIPE_CATEGORIES.map((item) => <option key={item} value={item}>{categoryLabel(item)}</option>)}</select></label>
+            <label className="block"><span className="form-label"><Icon name="youtube" size={15} /> Video YouTube (tuỳ chọn)</span><input value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} className="form-input" placeholder="https://youtu.be/..." /></label>
+            <label className="block md:col-span-2"><span className="form-label"><Icon name="list" size={15} /> Nguyên liệu <span className="font-normal text-muted">(mỗi dòng một nguyên liệu)</span></span><textarea value={ingredients} onChange={(e) => setIngredients(e.target.value)} className="form-input min-h-40" required placeholder={'500g thịt bò\n1kg xương ống\n...'} /></label>
+            <label className="block md:col-span-2"><span className="form-label"><Icon name="route" size={15} /> Cách làm <span className="font-normal text-muted">(mỗi dòng một bước)</span></span><textarea value={steps} onChange={(e) => setSteps(e.target.value)} className="form-input min-h-44" required placeholder={'Sơ chế nguyên liệu...\nNinh nước dùng...\nTrình bày và thưởng thức...'} /></label>
+            <div className="block md:col-span-2">
+              <span className="form-label"><Icon name="image" size={15} /> Ảnh món ăn</span>
+              <div className="grid gap-3 md:grid-cols-2">
+                <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] ?? null)} className="file-input" />
+                <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} className="form-input" placeholder="Hoặc dán URL ảnh (https://...)" />
+              </div>
+              <span className="mt-2 block text-xs text-muted">Ảnh mới sẽ được tải lên Cloudinary bằng unsigned upload preset; URL sẽ được giữ nguyên khi bạn dán ảnh có sẵn.</span>
+            </div>
+          </div>
+          <div className="rounded-2xl bg-cream/70 p-4 text-sm text-muted"><strong className="text-ink">Đường dẫn dự kiến:</strong> /cong-thuc/{generatedSlug || "ten-mon"}</div>
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><Link href="/" className="btn-secondary justify-center">Huỷ</Link><button disabled={busy} className="btn-primary justify-center">{busy ? <span className="size-4 animate-spin rounded-full border-2 border-ivory/30 border-t-ivory" /> : <Icon name="check" size={17} />} {mode === "edit" ? "Lưu thay đổi" : "Đăng công thức"}</button></div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+export function AddRecipePage() {
+  return <RequireAuth><EditorForm mode="create" /></RequireAuth>;
+}
+
+export function EditRecipePage() {
+  const params = useParams<{ slug: string }>();
+  return <RequireAuth adminOnly><EditorForm mode="edit" slug={params.slug} /></RequireAuth>;
+}

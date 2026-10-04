@@ -1,0 +1,183 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ivory: #fffaf0;
+  --color-cream: #f6ead6;
+  --color-card: #fffdf8;
+  --color-ink: #3d2a1f;
+  --color-muted: #7c685d;
+  --color-border: #ead8bd;
+  --color-lacquer: #9d2f20;
+  --color-lacquer-dark: #7d2418;
+  --color-gold: #dca63a;
+  --color-gold-light: #efc969;
+  --color-turmeric: #b7791f;
+  --color-turmeric-700: #986318;
+  --color-bamboo: #356947;
+  --color-plum: #76505c;
+  --font-serif: Georgia, Cambria, "Times New Roman", serif;
+  --font-sans: "Trebuchet MS", Arial, sans-serif;
+}
+
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
+body {
+  margin: 0;
+  background:
+    radial-gradient(
+      circle at 10% 0%,
+      rgba(220, 166, 58, 0.11),
+      transparent 24rem
+    ),
+    radial-gradient(
+      circle at 90% 12%,
+      rgba(53, 105, 71, 0.08),
+      transparent 22rem
+    ),
+    #fffaf0;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+a {
+  text-underline-offset: 3px;
+}
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+[x-cloak] {
+  display: none !important;
+}
+
+main {
+  min-height: calc(100vh - 150px);
+}
+
+.eyebrow {
+  @apply inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-extrabold uppercase tracking-[0.15em] text-turmeric-700;
+}
+.section-title {
+  @apply mt-2 font-serif text-3xl font-bold tracking-tight text-lacquer sm:text-4xl;
+}
+.subheading {
+  @apply flex items-center gap-2 font-serif text-2xl font-bold text-lacquer;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-gold,
+.btn-outline-dark,
+.icon-button,
+.page-button,
+.pill,
+.share {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl transition disabled:cursor-not-allowed disabled:opacity-50;
+}
+.btn-primary {
+  @apply bg-lacquer px-4 py-2.5 text-sm font-bold text-ivory shadow-sm hover:-translate-y-0.5 hover:bg-lacquer-dark;
+}
+.btn-secondary {
+  @apply border border-border bg-ivory px-4 py-2.5 text-sm font-bold text-ink hover:-translate-y-0.5 hover:border-lacquer/30 hover:text-lacquer;
+}
+.btn-gold {
+  @apply bg-gold px-4 py-2.5 text-sm font-extrabold text-lacquer hover:bg-gold-light;
+}
+.btn-outline-dark {
+  @apply border border-ivory/20 bg-ivory/10 px-4 py-2.5 text-sm font-bold text-ivory hover:bg-ivory/15;
+}
+.icon-button {
+  @apply size-10 border border-border bg-ivory text-muted hover:border-lacquer/30 hover:text-lacquer;
+}
+.icon-button-danger {
+  @apply hover:border-red-200 hover:bg-red-50 hover:text-red-700;
+}
+.page-button {
+  @apply size-10 border border-border bg-card text-sm font-bold text-ink hover:border-lacquer/30 hover:text-lacquer disabled:opacity-40;
+}
+.page-button-active {
+  @apply border-lacquer bg-lacquer text-ivory hover:bg-lacquer-dark hover:text-ivory;
+}
+.pill {
+  @apply border border-border bg-card px-3 py-2 text-xs font-bold text-muted hover:border-lacquer/30 hover:text-lacquer;
+}
+.pill-active {
+  @apply border-lacquer/20 bg-lacquer/10 text-lacquer;
+}
+.share {
+  @apply size-10 text-white shadow-sm hover:-translate-y-0.5;
+}
+.share.facebook {
+  background: #1877f2;
+}
+.share.x {
+  background: #111;
+}
+.share.pinterest {
+  background: #d3182a;
+}
+.share.linkedin {
+  background: #0a66c2;
+}
+
+.menu-link {
+  @apply flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-ink hover:bg-cream hover:text-lacquer;
+}
+.form-label {
+  @apply mb-2 flex items-center gap-1.5 text-sm font-bold text-ink;
+}
+.form-input {
+  @apply w-full rounded-xl border border-border bg-ivory px-4 py-3 text-sm text-ink outline-none placeholder:text-muted/60 focus:border-lacquer/40 focus:ring-4 focus:ring-lacquer/10;
+}
+.file-input {
+  @apply block w-full rounded-xl border border-dashed border-border bg-cream/50 px-4 py-3 text-sm text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-lacquer file:px-3 file:py-2 file:font-bold file:text-ivory hover:border-lacquer/30;
+}
+.notice-info,
+.notice-danger {
+  @apply flex flex-col gap-1 rounded-2xl border px-4 py-4 text-sm;
+}
+.notice-info {
+  @apply border-bamboo/20 bg-bamboo/8 text-bamboo;
+}
+.notice-danger {
+  @apply border-lacquer/20 bg-lacquer/8 text-lacquer;
+}
+
+.hero-paper {
+  background:
+    linear-gradient(135deg, rgba(157, 47, 32, 0.96), rgba(125, 36, 24, 0.98)),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 18px,
+      rgba(255, 255, 255, 0.035) 19px,
+      transparent 20px
+    );
+}
+
+.prose-viet p {
+  @apply leading-7 text-muted;
+}
+.prose-viet h2 {
+  @apply mt-8 font-serif text-2xl font-bold text-lacquer;
+}
+.prose-viet h3 {
+  @apply mt-6 font-serif text-xl font-bold text-ink;
+}
+.prose-viet li {
+  @apply leading-7 text-muted;
+}
+
+button {
+  cursor: pointer;
+}
