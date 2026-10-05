@@ -2,7 +2,6 @@
 
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import type { Comment, Recipe } from "@/lib/types";
@@ -17,12 +16,8 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import Icon from "@/components/ui/Icon";
 import Alert, { LoadingBlock } from "@/components/ui/Alert";
 import { categoryAccent, categoryLabel } from "@/lib/category";
-
-function youtubeEmbed(url?: string) {
-  if (!url) return null;
-  const match = url.match(/(?:v=|youtu\.be\/|shorts\/)([^?&/]+)/);
-  return match ? `https://www.youtube.com/embed/${match[1]}` : null;
-}
+import { youtubeEmbedUrl } from "@/lib/youtube";
+import RecipeImage from "@/components/recipe/RecipeImage";
 
 function subscribeToLocation() {
   return () => {};
@@ -134,7 +129,7 @@ export default function RecipeDetail() {
   }, [slug]);
 
   const embed = useMemo(
-    () => youtubeEmbed(recipe?.youtubeUrl),
+    () => youtubeEmbedUrl(recipe?.youtubeUrl),
     [recipe?.youtubeUrl],
   );
   const relatedItems = related.slice((relatedPage - 1) * 3, relatedPage * 3);
@@ -179,20 +174,19 @@ export default function RecipeDetail() {
       </div>
       <div className="overflow-hidden rounded-[2rem] border border-border bg-card shadow-[0_18px_70px_rgba(83,43,23,0.1)]">
         <div className="relative aspect-[16/8] bg-cream">
-          {recipe.imageUrl ? (
-            <Image
-              src={recipe.imageUrl}
-              alt={recipe.title}
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover"
-            />
-          ) : (
-            <div className="grid h-full place-items-center text-lacquer/20">
-              <Icon name="bowl" size={90} strokeWidth={1.2} />
-            </div>
-          )}
+          <RecipeImage
+            imageUrl={recipe.imageUrl}
+            youtubeUrl={recipe.youtubeUrl}
+            alt={recipe.title}
+            priority
+            sizes="100vw"
+            className="object-cover"
+            fallback={
+              <div className="grid h-full place-items-center text-lacquer/20">
+                <Icon name="bowl" size={90} strokeWidth={1.2} />
+              </div>
+            }
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/5 to-transparent" />
           <div className="absolute bottom-5 left-5 right-5">
             <span
