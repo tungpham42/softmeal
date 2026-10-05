@@ -9,7 +9,8 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { auth, googleProvider } from "@/lib/firebase/client";
+// Note: Ensure `facebookProvider` is initialized and exported in your client.ts file
+import { auth, googleProvider, facebookProvider } from "@/lib/firebase/client";
 import { createOrUpdateUser } from "@/lib/firebase/data";
 import Icon from "@/components/ui/Icon";
 import Alert from "@/components/ui/Alert";
@@ -73,6 +74,22 @@ function AuthCard({ mode }: { mode: "login" | "register" }) {
       router.push("/");
     } catch {
       setError("Đăng nhập với Google thất bại. Vui lòng thử lại.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleFacebook() {
+    setError("");
+    setBusy(true);
+    try {
+      const credential = await signInWithPopup(auth, facebookProvider);
+      await createOrUpdateUser(credential.user, {
+        authProvider: "facebook.com",
+      });
+      router.push("/");
+    } catch {
+      setError("Đăng nhập với Facebook thất bại. Vui lòng thử lại.");
     } finally {
       setBusy(false);
     }
@@ -171,17 +188,30 @@ function AuthCard({ mode }: { mode: "login" | "register" }) {
         <span>hoặc</span>
         <span className="h-px flex-1 bg-border" />
       </div>
-      <button
-        type="button"
-        onClick={() => void handleGoogle()}
-        disabled={busy}
-        className="btn-secondary w-full justify-center"
-      >
-        <span className="grid size-5 place-items-center rounded-full bg-white font-bold text-xs text-[#4285f4]">
-          G
-        </span>{" "}
-        {register ? "Đăng ký với Google" : "Đăng nhập với Google"}
-      </button>
+      <div className="space-y-3">
+        <button
+          type="button"
+          onClick={() => void handleGoogle()}
+          disabled={busy}
+          className="btn-secondary w-full justify-center"
+        >
+          <span className="grid size-5 place-items-center rounded-full bg-white font-bold text-xs text-[#4285f4]">
+            G
+          </span>{" "}
+          {register ? "Đăng ký với Google" : "Đăng nhập với Google"}
+        </button>
+        <button
+          type="button"
+          onClick={() => void handleFacebook()}
+          disabled={busy}
+          className="btn-secondary w-full justify-center"
+        >
+          <span className="grid size-5 place-items-center rounded-full bg-[#1877F2] font-bold text-xs text-white">
+            f
+          </span>{" "}
+          {register ? "Đăng ký với Facebook" : "Đăng nhập với Facebook"}
+        </button>
+      </div>
     </div>
   );
 }
