@@ -104,6 +104,9 @@ export async function upsertUserDocument(
   extra: Record<string, unknown> = {},
 ) {
   const currentTime = new Date().toISOString();
+  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.trim().toLowerCase();
+  const userEmail = user.email?.toLowerCase();
+
   const profile = {
     uid: user.uid,
     email: user.email,
@@ -114,10 +117,7 @@ export async function upsertUserDocument(
     lastLogin: currentTime,
     ...extra,
     isAdmin:
-      user.email?.toLowerCase() ===
-      process.env.NEXT_PUBLIC_ADMIN_EMAIL?.trim().toLowerCase()
-        ? true
-        : Boolean(extra.isAdmin),
+      Boolean(adminEmail && userEmail === adminEmail) || Boolean(extra.isAdmin),
   };
   await setDoc(doc(db, "users", user.uid), profile, { merge: true });
   return profile;
@@ -150,7 +150,7 @@ export async function createOrUpdateUser(
 ) {
   const username = String(extra.username ?? user.displayName ?? "Người dùng");
   const data = await upsertUserDocument(user, { ...extra, username });
-  await updateCommentsForUsername(user.uid, username);
+  if (!user.isAnonymous) await updateCommentsForUsername(user.uid, username);
   return data;
 }
 

@@ -168,7 +168,7 @@ function ProfileInner() {
             <div className="mt-5 rounded-2xl bg-cream/60 p-4 text-sm">
               <div className="text-muted">Email</div>
               <div className="mt-1 font-semibold text-ink">
-                {currentUser.email}
+                {currentUser.email ?? "Tài khoản khách (ẩn danh)"}
               </div>
             </div>
             <form onSubmit={updateName} className="mt-4">

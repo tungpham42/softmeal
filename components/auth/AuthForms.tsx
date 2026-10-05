@@ -5,6 +5,7 @@ import { useState } from "react";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInAnonymously,
   signInWithPopup,
   updateProfile,
 } from "firebase/auth";
@@ -90,6 +91,25 @@ function AuthCard({ mode }: { mode: "login" | "register" }) {
       router.push("/");
     } catch {
       setError("Đăng nhập với Facebook thất bại. Vui lòng thử lại.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleAnonymous() {
+    setError("");
+    setBusy(true);
+    try {
+      const credential = await signInAnonymously(auth);
+      const guestName = `Khách ${credential.user.uid.slice(0, 5)}`;
+      await updateProfile(credential.user, { displayName: guestName });
+      await createOrUpdateUser(credential.user, {
+        username: guestName,
+        authProvider: "anonymous",
+      });
+      router.push("/");
+    } catch {
+      setError("Đăng nhập ẩn danh thất bại. Vui lòng thử lại.");
     } finally {
       setBusy(false);
     }
@@ -210,6 +230,14 @@ function AuthCard({ mode }: { mode: "login" | "register" }) {
             f
           </span>{" "}
           {register ? "Đăng ký với Facebook" : "Đăng nhập với Facebook"}
+        </button>
+        <button
+          type="button"
+          onClick={() => void handleAnonymous()}
+          disabled={busy}
+          className="btn-secondary w-full justify-center"
+        >
+          <Icon name="user" size={17} /> Tiếp tục với tư cách khách
         </button>
       </div>
     </div>
