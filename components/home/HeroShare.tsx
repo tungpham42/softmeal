@@ -37,31 +37,39 @@ function BrandMark({ name }: { name: BrandName }) {
 }
 
 const shareLinkClass =
-  "group inline-flex items-center gap-2 rounded-full border border-ivory/15 bg-ivory/10 px-3.5 py-2 text-xs font-extrabold text-ivory transition duration-200 hover:-translate-y-0.5 hover:border-gold/55 hover:bg-ivory/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-light/70";
+  "group inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-extrabold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-light/70";
+
+// Official brand colors. Full class strings so Tailwind can detect them.
+const brandClasses: Record<BrandName, string> = {
+  // Facebook blue #1877F2
+  facebook:
+    "border-[#1877F2] bg-[#1877F2] hover:border-[#4293FF] hover:bg-[#4293FF]",
+  // X black #000000 (light border keeps it visible on dark backgrounds)
+  x: "border-white/30 bg-black hover:border-white/60 hover:bg-[#15181C]",
+  // LinkedIn blue #0A66C2
+  linkedin:
+    "border-[#0A66C2] bg-[#0A66C2] hover:border-[#2D8BE3] hover:bg-[#2D8BE3]",
+};
 
 const shareOptions: Array<{
   name: BrandName;
   displayName: string;
   label: string;
-  accent: string;
 }> = [
   {
     name: "facebook",
     displayName: "Facebook",
     label: "Rủ hội bạn",
-    accent: "😋",
   },
   {
     name: "x",
     displayName: "X",
     label: "Kể chuyện món này",
-    accent: "✦",
   },
   {
     name: "linkedin",
     displayName: "LinkedIn",
     label: "Lan tỏa cảm hứng",
-    accent: "↗",
   },
 ];
 
@@ -106,14 +114,14 @@ export default function HeroShare() {
   return (
     <div className="mt-7">
       <p className="text-sm font-extrabold text-gold-light sm:text-base">
-        🔥 Thấy ngon? Đừng giữ một mình!
+        Thấy ngon? Đừng giữ một mình!
       </p>
       <p className="mt-1 text-xs leading-5 text-ivory/65 sm:text-sm">
         Một cú chạm để món nhà lên sóng — rủ bạn bè vào bếp và lan tỏa cảm hứng.
       </p>
 
       <div className="mt-3 flex flex-wrap gap-2" aria-label="Chia sẻ trang này">
-        {shareOptions.map(({ name, displayName, label, accent }) => (
+        {shareOptions.map(({ name, displayName, label }) => (
           <a
             key={name}
             href={shareLinks[name]}
@@ -124,11 +132,8 @@ export default function HeroShare() {
             onClick={(event) => {
               if (!shareUrl) event.preventDefault();
             }}
-            className={shareLinkClass}
+            className={`${shareLinkClass} ${brandClasses[name]}`}
           >
-            <span aria-hidden="true" className="text-sm">
-              {accent}
-            </span>
             <BrandMark name={name} />
             <span>{label}</span>
           </a>
