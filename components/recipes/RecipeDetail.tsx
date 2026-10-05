@@ -33,42 +33,61 @@ function ShareLinks({ title }: { title: string }) {
     getLocationHref,
     () => "",
   );
+
   if (!url) return null;
-  const encoded = encodeURIComponent(url);
+
+  const encodedUrl = encodeURIComponent(url);
+  const encodedTitle = encodeURIComponent(title);
+
+  const facebookShareUrl =
+    `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+
+  const handleFacebookShare = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+
+    // Mobile: let the browser/Facebook handle the normal share URL.
+    // Using location.href avoids popup blockers on iOS Safari.
+    if (typeof window !== "undefined") {
+      window.location.href = facebookShareUrl;
+    }
+  };
+
   return (
     <div className="flex flex-wrap gap-2">
       <a
         className="share facebook"
-        href={`https://www.facebook.com/sharer/sharer.php?u=${encoded}`}
-        target="_blank"
-        rel="noreferrer"
+        href={facebookShareUrl}
+        onClick={handleFacebookShare}
         aria-label="Chia sẻ Facebook"
       >
         <Icon name="facebook" />
       </a>
+
       <a
         className="share x"
-        href={`https://twitter.com/intent/tweet?url=${encoded}&text=${encodeURIComponent(title)}`}
+        href={`https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`}
         target="_blank"
-        rel="noreferrer"
+        rel="noopener noreferrer"
         aria-label="Chia sẻ X"
       >
         <Icon name="x" />
       </a>
+
       <a
         className="share pinterest"
-        href={`https://pinterest.com/pin/create/button/?url=${encoded}&description=${encodeURIComponent(title)}`}
+        href={`https://pinterest.com/pin/create/button/?url=${encodedUrl}&description=${encodedTitle}`}
         target="_blank"
-        rel="noreferrer"
+        rel="noopener noreferrer"
         aria-label="Chia sẻ Pinterest"
       >
         <Icon name="pinterest" />
       </a>
+
       <a
         className="share linkedin"
-        href={`https://www.linkedin.com/sharing/share-offsite/?url=${encoded}`}
+        href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`}
         target="_blank"
-        rel="noreferrer"
+        rel="noopener noreferrer"
         aria-label="Chia sẻ LinkedIn"
       >
         <Icon name="linkedin" />
