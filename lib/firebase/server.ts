@@ -39,6 +39,17 @@ const db = getFirestore(getFirebaseAdminApp());
  * Server-only recipe lookup used by Next.js generateMetadata().
  * Keep this file free of `use client` and browser-only Firebase APIs.
  */
+export async function fetchRecipesServer(): Promise<Recipe[]> {
+  const snapshot = await db.collection("recipes").get();
+  return snapshot.docs.map((doc) => {
+    const data = doc.data();
+    return {
+      ...data,
+      id: doc.id,
+    } as Recipe;
+  });
+}
+
 export async function fetchRecipeBySlugServer(
   slug: string,
 ): Promise<Recipe | null> {
