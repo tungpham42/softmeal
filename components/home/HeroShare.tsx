@@ -30,7 +30,11 @@ function BrandMark({ name }: { name: BrandName }) {
   }
 
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="size-4 fill-current">
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="size-4 fill-current"
+    >
       <path d="M18.7 4h2.5l-5.5 6.3 6.5 9.7h-5.1l-4-5.9-5.1 5.9H5.5l5.9-6.7L5.2 4h5.2l3.6 5.3L18.7 4Zm-.9 14.3h1.4L9.8 5.6H8.3l9.5 12.7Z" />
     </svg>
   );
@@ -39,14 +43,12 @@ function BrandMark({ name }: { name: BrandName }) {
 const shareLinkClass =
   "group inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-extrabold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-light/70";
 
-// Official brand colors. Full class strings so Tailwind can detect them.
 const brandClasses: Record<BrandName, string> = {
-  // Facebook blue #1877F2
   facebook:
     "border-[#1877F2] bg-[#1877F2] hover:border-[#4293FF] hover:bg-[#4293FF]",
-  // X black #000000 (light border keeps it visible on dark backgrounds)
+
   x: "border-white/30 bg-black hover:border-white/60 hover:bg-[#15181C]",
-  // LinkedIn blue #0A66C2
+
   linkedin:
     "border-[#0A66C2] bg-[#0A66C2] hover:border-[#2D8BE3] hover:bg-[#2D8BE3]",
 };
@@ -75,10 +77,13 @@ const shareOptions: Array<{
 
 const shareMessages: Record<BrandName, string> = {
   facebook:
-    "🔥 TÌNH CỜ LƯỚT THẤY MÀ THẤY ĐÓI NGANG 😋\\n\\nCó những món ăn không chỉ ngon — mà còn kéo cả ký ức gia đình quay về. ❤️\\n\\nMình vừa tìm thấy một món rất đáng để lưu lại cho mâm cơm tuần này. Ai mê món Việt, tag người hay rủ bạn vào bếp cùng! 👇",
-  x: "🔥 Không biết tối nay ăn gì? Đây là tín hiệu bạn đang tìm một món Việt thật cuốn 😋\\n\\nNgon, dễ làm, đậm vị nhà — kiểu món nhìn một lần là muốn vào bếp ngay. 👇",
+    "🔥 TÌNH CỜ LƯỚT THẤY MÀ THẤY ĐÓI NGANG 😋\n\nCó những món ăn không chỉ ngon — mà còn kéo cả ký ức gia đình quay về. ❤️\n\nMình vừa tìm thấy một món rất đáng để lưu lại cho mâm cơm tuần này. Ai mê món Việt, tag người hay rủ bạn vào bếp cùng! 👇",
+
+  x:
+    "🔥 Không biết tối nay ăn gì? Đây là tín hiệu bạn đang tìm một món Việt thật cuốn 😋\n\nNgon, dễ làm, đậm vị nhà — kiểu món nhìn một lần là muốn vào bếp ngay. 👇",
+
   linkedin:
-    "🍲 Có những món ăn không chỉ tạo nên một bữa cơm, mà còn tạo nên những câu chuyện để nhớ.\\n\\nMình vừa khám phá một công thức mang đúng tinh thần đó: gần gũi, dễ áp dụng và đậm chất Việt. Một chút cảm hứng cho căn bếp và cho những bữa cơm có ý nghĩa. ✨\\n\\nRất đáng để lưu lại và chia sẻ cùng những người cũng yêu ẩm thực Việt.",
+    "🍲 Có những món ăn không chỉ tạo nên một bữa cơm, mà còn tạo nên những câu chuyện để nhớ.\n\nMình vừa khám phá một công thức mang đúng tinh thần đó: gần gũi, dễ áp dụng và đậm chất Việt. Một chút cảm hứng cho căn bếp và cho những bữa cơm có ý nghĩa. ✨\n\nRất đáng để lưu lại và chia sẻ cùng những người cũng yêu ẩm thực Việt.",
 };
 
 export default function HeroShare() {
@@ -86,6 +91,7 @@ export default function HeroShare() {
     (callback) => {
       window.addEventListener("popstate", callback);
       window.addEventListener("hashchange", callback);
+
       return () => {
         window.removeEventListener("popstate", callback);
         window.removeEventListener("hashchange", callback);
@@ -101,43 +107,136 @@ export default function HeroShare() {
     facebook: shareUrl
       ? `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`
       : "#",
+
     x: shareUrl
       ? `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodeURIComponent(
-          `${shareMessages.x}\\n\\n${shareUrl}`,
+          `${shareMessages.x}\n\n${shareUrl}`,
         )}`
       : "#",
+
     linkedin: shareUrl
       ? `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`
       : "#",
   };
+
+  /**
+   * Share the current page using the native Web Share API.
+   *
+   * On iOS / Android:
+   *
+   * Website
+   *   ↓
+   * navigator.share()
+   *   ↓
+   * Native Share Sheet
+   *   ↓
+   * Facebook app
+   *
+   * On unsupported browsers:
+   *   → Facebook web share dialog
+   */
+  async function handleFacebookShare() {
+    if (!shareUrl) {
+      return;
+    }
+
+    const shareData: ShareData = {
+      title: "Bếp nhà Quỳnh",
+      text: shareMessages.facebook,
+      url: shareUrl,
+    };
+
+    // Mobile browsers supporting Web Share API.
+    if (
+      typeof navigator !== "undefined" &&
+      typeof navigator.share === "function"
+    ) {
+      try {
+        // Some browsers expose canShare(), some don't.
+        if (
+          typeof navigator.canShare !== "function" ||
+          navigator.canShare(shareData)
+        ) {
+          await navigator.share(shareData);
+          return;
+        }
+      } catch (error) {
+        // User closed/cancelled the native share sheet.
+        if (
+          error instanceof DOMException &&
+          error.name === "AbortError"
+        ) {
+          return;
+        }
+
+        console.error("Web Share API failed:", error);
+      }
+    }
+
+    // Fallback for desktop/unsupported browsers.
+    window.open(
+      shareLinks.facebook,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  }
 
   return (
     <div className="mt-7">
       <p className="text-sm font-extrabold text-gold-light sm:text-base">
         Thấy ngon? Đừng giữ một mình!
       </p>
+
       <p className="mt-1 text-xs leading-5 text-ivory/65 sm:text-sm">
         Một cú chạm để món nhà lên sóng — rủ bạn bè vào bếp và lan tỏa cảm hứng.
       </p>
 
-      <div className="mt-3 flex flex-wrap gap-2" aria-label="Chia sẻ trang này">
-        {shareOptions.map(({ name, displayName, label }) => (
-          <a
-            key={name}
-            href={shareLinks[name]}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`${label} trên ${displayName}`}
-            data-share-message={shareMessages[name]}
-            onClick={(event) => {
-              if (!shareUrl) event.preventDefault();
-            }}
-            className={`${shareLinkClass} ${brandClasses[name]}`}
-          >
-            <BrandMark name={name} />
-            <span>{label}</span>
-          </a>
-        ))}
+      <div
+        className="mt-3 flex flex-wrap gap-2"
+        aria-label="Chia sẻ trang này"
+      >
+        {shareOptions.map(({ name, displayName, label }) => {
+          // Facebook uses Web Share API.
+          if (name === "facebook") {
+            return (
+              <button
+                key={name}
+                type="button"
+                onClick={handleFacebookShare}
+                disabled={!shareUrl}
+                aria-label={`${label} trên ${displayName}`}
+                data-share-message={shareMessages[name]}
+                className={`${shareLinkClass} ${brandClasses[name]} disabled:pointer-events-none disabled:opacity-50`}
+              >
+                <BrandMark name={name} />
+
+                <span>{label}</span>
+              </button>
+            );
+          }
+
+          // X and LinkedIn keep their existing web-share behaviour.
+          return (
+            <a
+              key={name}
+              href={shareLinks[name]}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`${label} trên ${displayName}`}
+              data-share-message={shareMessages[name]}
+              onClick={(event) => {
+                if (!shareUrl) {
+                  event.preventDefault();
+                }
+              }}
+              className={`${shareLinkClass} ${brandClasses[name]}`}
+            >
+              <BrandMark name={name} />
+
+              <span>{label}</span>
+            </a>
+          );
+        })}
       </div>
     </div>
   );
