@@ -7,7 +7,7 @@ export default function Footer() {
       <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
         <div>
           <div className="flex items-center gap-2 font-serif text-lg font-bold text-ink">
-            <Icon name="bowl" size={20} /> Bếp Việt
+            <Icon name="bowl" size={20} /> Bếp nhà Tùng
           </div>
           <p className="mt-1">
             Lưu giữ những món ngon, câu chuyện và ký ức quanh mâm cơm Việt.

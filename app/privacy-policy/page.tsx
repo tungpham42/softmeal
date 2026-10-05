@@ -23,9 +23,9 @@ export default function PrivacyPolicyPage() {
         </p>
         <h2>Dịch vụ bên thứ ba</h2>
         <p>
-          Bếp Việt sử dụng Firebase cho xác thực và Firestore, Cloudinary cho
-          lưu trữ ảnh, và có thể dùng Google Analytics/Tag Manager cho thống kê
-          truy cập.
+          Bếp nhà Tùng sử dụng Firebase cho xác thực và Firestore, Cloudinary
+          cho lưu trữ ảnh, và có thể dùng Google Analytics/Tag Manager cho thống
+          kê truy cập.
         </p>
         <h2>Thông tin công khai</h2>
         <p>

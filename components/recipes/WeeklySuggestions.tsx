@@ -101,8 +101,8 @@ export default function WeeklySuggestions() {
           <h1 className="section-title">Gợi ý công thức theo tuần</h1>
 
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-            Chọn các nhóm món bạn muốn xuất hiện, rồi để Bếp Việt bốc thực đơn
-            ngẫu nhiên.
+            Chọn các nhóm món bạn muốn xuất hiện, rồi để Bếp nhà Tùng bốc thực
+            đơn ngẫu nhiên.
           </p>
         </div>
 

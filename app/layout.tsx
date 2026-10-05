@@ -9,24 +9,27 @@ import AlpineProvider from "@/components/site/AlpineProvider";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 
 export const metadata: Metadata = {
-  title: { default: "Bếp Việt — Món ăn & ký ức", template: "%s | Bếp Việt" },
+  title: {
+    default: "Bếp nhà Tùng — Món ăn & ký ức",
+    template: "%s | Bếp nhà Tùng",
+  },
   description:
     "Nền tảng chia sẻ công thức và gợi ý món ăn mang hương vị truyền thống Việt Nam.",
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
   ),
   openGraph: {
-    title: "Bếp Việt — Món ăn & ký ức",
+    title: "Bếp nhà Tùng — Món ăn & ký ức",
     description: "Lưu giữ những món ngon và câu chuyện quanh mâm cơm Việt.",
     type: "website",
     url: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-    siteName: "Bếp Việt",
+    siteName: "Bếp nhà Tùng",
     images: [
       {
         url: "/1200x630.jpg",
         width: 1200,
         height: 630,
-        alt: "Bếp Việt — Món ăn & ký ức",
+        alt: "Bếp nhà Tùng — Món ăn & ký ức",
       },
     ],
   },

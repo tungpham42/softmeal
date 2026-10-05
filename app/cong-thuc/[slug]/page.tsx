@@ -5,7 +5,7 @@ import { categoryLabel } from "@/lib/category";
 import type { Recipe } from "@/lib/types";
 import { fetchRecipeBySlugServer } from "@/lib/firebase/server";
 
-const SITE_NAME = "Bếp Việt";
+const SITE_NAME = "Bếp nhà Tùng";
 const RECIPE_PATH = "/cong-thuc";
 
 const getRecipeBySlug = cache((slug: string) => fetchRecipeBySlugServer(slug));
@@ -86,7 +86,7 @@ export async function generateMetadata({
         absolute: `Không tìm thấy công thức | ${SITE_NAME}`,
       },
       description:
-        "Công thức món ăn không tồn tại hoặc đã được gỡ khỏi Bếp Việt.",
+        "Công thức món ăn không tồn tại hoặc đã được gỡ khỏi Bếp nhà Tùng.",
       robots: {
         index: false,
         follow: true,

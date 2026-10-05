@@ -22,7 +22,7 @@ const sections = [
   {
     title: "Bắt đầu",
     icon: "book" as const,
-    text: "Bếp Việt là nơi bạn có thể khám phá công thức, lấy ý tưởng cho bữa ăn và chia sẻ món ruột của gia đình.",
+    text: "Bếp nhà Tùng là nơi bạn có thể khám phá công thức, lấy ý tưởng cho bữa ăn và chia sẻ món ruột của gia đình.",
   },
   {
     title: "Tạo tài khoản",
@@ -52,7 +52,7 @@ export default function GuidePage() {
         <span className="eyebrow">
           <Icon name="book" size={15} /> Cẩm nang
         </span>
-        <h1 className="section-title">Cách sử dụng Bếp Việt</h1>
+        <h1 className="section-title">Cách sử dụng Bếp nhà Tùng</h1>
         <p className="mt-2 text-sm text-muted">
           Hướng dẫn nhanh để tìm món, chia sẻ công thức và tham gia cộng đồng.
         </p>
