@@ -19,6 +19,48 @@ import Icon from "@/components/ui/Icon";
 import Alert, { LoadingBlock } from "@/components/ui/Alert";
 import RequireAuth from "@/components/auth/RequireAuth";
 
+const YOUTUBE_ID_PATTERN = /^[\w-]{11}$/;
+
+/** Lấy video ID từ các dạng link YouTube phổ biến (watch, youtu.be, embed, shorts, live). */
+function extractYouTubeId(rawUrl: string): string | null {
+  const value = rawUrl.trim();
+  if (!value) return null;
+  try {
+    const url = new URL(
+      /^https?:\/\//i.test(value) ? value : `https://${value}`,
+    );
+    const host = url.hostname.replace(/^(www|m|music)\./, "");
+    let id: string | null = null;
+    if (host === "youtu.be") {
+      id = url.pathname.split("/")[1] ?? null;
+    } else if (host === "youtube.com" || host === "youtube-nocookie.com") {
+      if (url.pathname === "/watch") id = url.searchParams.get("v");
+      else {
+        const [, kind, videoId] = url.pathname.split("/");
+        if (["embed", "shorts", "live", "v"].includes(kind))
+          id = videoId ?? null;
+      }
+    }
+    return id && YOUTUBE_ID_PATTERN.test(id) ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Ưu tiên ảnh chất lượng cao nhất (maxres); nếu video không có thì dùng hqdefault. */
+function resolveYouTubeThumbnail(videoId: string): Promise<string> {
+  const base = `https://i.ytimg.com/vi/${videoId}`;
+  const fallback = `${base}/hqdefault.jpg`;
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.onload = () =>
+      // YouTube trả ảnh placeholder 120x90 khi không có maxres
+      resolve(img.naturalWidth > 120 ? `${base}/maxresdefault.jpg` : fallback);
+    img.onerror = () => resolve(fallback);
+    img.src = `${base}/maxresdefault.jpg`;
+  });
+}
+
 function EditorForm({
   mode,
   slug,
@@ -38,6 +80,7 @@ function EditorForm({
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageAuto, setImageAuto] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [busy, setBusy] = useState(false);
@@ -62,6 +105,24 @@ function EditorForm({
       .catch(() => setError("Không thể tải công thức."))
       .finally(() => setInitialLoading(false));
   }, [mode, slug]);
+
+  // Tự lấy ảnh bìa từ video YouTube khi chưa có ảnh do người dùng chọn/dán.
+  useEffect(() => {
+    const videoId = extractYouTubeId(youtubeUrl);
+    if (!videoId) return;
+    if (imageFile) return;
+    if (imageUrl.trim() && !imageAuto) return;
+    let cancelled = false;
+    void resolveYouTubeThumbnail(videoId).then((thumbnail) => {
+      if (cancelled) return;
+      setImageUrl(thumbnail);
+      setImageAuto(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [youtubeUrl, imageFile]);
 
   const generatedSlug = useMemo(() => slugify(title), [title]);
 
@@ -194,9 +255,15 @@ function EditorForm({
               </span>
               <input
                 value={youtubeUrl}
-                onChange={(e) => setYoutubeUrl(e.target.value)}
+                onChange={(e) => {
+                  setYoutubeUrl(e.target.value);
+                  if (imageAuto) {
+                    setImageUrl("");
+                    setImageAuto(false);
+                  }
+                }}
                 className="form-input"
-                placeholder="https://youtu.be/..."
+                placeholder="https://www.youtube.com/..."
               />
             </label>
             <label className="block md:col-span-2">
@@ -239,19 +306,36 @@ function EditorForm({
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+                  onChange={(e) => {
+                    setImageFile(e.target.files?.[0] ?? null);
+                    setImageAuto(false);
+                  }}
                   className="file-input"
                 />
                 <input
                   value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
+                  onChange={(e) => {
+                    setImageUrl(e.target.value);
+                    setImageAuto(false);
+                  }}
                   className="form-input"
                   placeholder="Hoặc dán URL ảnh (https://...)"
                 />
               </div>
+              {!imageFile && imageUrl.trim() && (
+                <div className="mt-3 overflow-hidden rounded-2xl border border-border">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imageUrl}
+                    alt="Xem trước ảnh món ăn"
+                    className="aspect-video w-full object-cover"
+                  />
+                </div>
+              )}
               <span className="mt-2 block text-xs text-muted">
-                Ảnh mới sẽ được tải lên Cloudinary bằng unsigned upload preset;
-                URL sẽ được giữ nguyên khi bạn dán ảnh có sẵn.
+                {imageAuto
+                  ? "Đang dùng ảnh bìa của video YouTube. Chọn ảnh khác hoặc dán URL để thay thế."
+                  : "Ảnh mới sẽ được tải lên Cloudinary bằng unsigned upload preset; URL sẽ được giữ nguyên khi bạn dán ảnh có sẵn. Nếu để trống và có link YouTube, ảnh bìa video sẽ được dùng tự động."}
               </span>
             </div>
           </div>
