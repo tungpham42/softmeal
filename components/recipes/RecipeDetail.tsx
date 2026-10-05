@@ -172,7 +172,7 @@ export default function RecipeDetail() {
     <article className="mx-auto max-w-5xl">
       <div className="mb-5 text-sm text-muted">
         <Link href="/" className="hover:text-lacquer">
-          Bếp nhà Tùng
+          Bếp nhà Quỳnh
         </Link>
         <span className="mx-2">/</span>
         <span>{recipe.title}</span>

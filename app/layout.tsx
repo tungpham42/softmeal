@@ -10,8 +10,8 @@ import { AuthProvider } from "@/components/auth/AuthProvider";
 
 export const metadata: Metadata = {
   title: {
-    default: "Bếp nhà Tùng — Món ăn & ký ức",
-    template: "%s | Bếp nhà Tùng",
+    default: "Bếp nhà Quỳnh — Món ăn & ký ức",
+    template: "%s | Bếp nhà Quỳnh",
   },
   description:
     "Nền tảng chia sẻ công thức và gợi ý món ăn mang hương vị truyền thống Việt Nam.",
@@ -19,17 +19,17 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
   ),
   openGraph: {
-    title: "Bếp nhà Tùng — Món ăn & ký ức",
+    title: "Bếp nhà Quỳnh — Món ăn & ký ức",
     description: "Lưu giữ những món ngon và câu chuyện quanh mâm cơm Việt.",
     type: "website",
     url: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-    siteName: "Bếp nhà Tùng",
+    siteName: "Bếp nhà Quỳnh",
     images: [
       {
         url: "/1200x630.jpg",
         width: 1200,
         height: 630,
-        alt: "Bếp nhà Tùng — Món ăn & ký ức",
+        alt: "Bếp nhà Quỳnh — Món ăn & ký ức",
       },
     ],
   },
