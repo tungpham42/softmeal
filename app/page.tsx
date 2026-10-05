@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { IconName } from "@/components/ui/Icon";
 import RecipeExplorer from "@/components/recipes/RecipeExplorer";
 import Icon from "@/components/ui/Icon";
+import HeroShare from "@/components/home/HeroShare";
 
 export default function HomePage() {
   return (
@@ -28,6 +29,7 @@ export default function HomePage() {
               <Icon name="plus" size={17} /> Chia sẻ món nhà
             </Link>
           </div>
+          <HeroShare />
         </div>
       </section>
       <RecipeExplorer />
