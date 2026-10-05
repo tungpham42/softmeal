@@ -14,7 +14,7 @@ export default function RecipeCard({
   onDelete?: () => void;
 }) {
   const accent =
-    categoryAccent[recipe.category] ?? "bg-gold/10 text-lacquer border-gold/30";
+    categoryAccent[recipe.category] ?? "bg-gold text-lacquer border-white/70";
   return (
     <article className="group overflow-hidden rounded-3xl border border-border bg-card shadow-[0_12px_36px_rgba(87,45,24,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_48px_rgba(87,45,24,0.14)]">
       <Link href={`/cong-thuc/${recipe.slug}`} className="block">
@@ -34,8 +34,9 @@ export default function RecipeCard({
           )}
           <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/35 to-transparent" />
           <span
-            className={`absolute left-4 top-4 rounded-full border px-3 py-1 text-xs font-bold ${accent}`}
+            className={`absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full border-2 px-3.5 py-1.5 text-xs font-extrabold uppercase tracking-wide shadow-lg shadow-black/25 ${accent}`}
           >
+            <span className="h-1.5 w-1.5 rounded-full bg-current opacity-80" />
             {categoryLabel(recipe.category)}
           </span>
         </div>

@@ -12,9 +12,9 @@ export function categoryLabel(category?: string) {
 }
 
 export const categoryAccent: Record<string, string> = {
-  Breakfast: "bg-turmeric/15 text-turmeric-700 border-turmeric/30",
-  Lunch: "bg-bamboo/10 text-bamboo border-bamboo/20",
-  Dinner: "bg-lacquer/10 text-lacquer border-lacquer/20",
-  Vegan: "bg-bamboo/10 text-bamboo border-bamboo/20",
-  Dessert: "bg-plum/10 text-plum border-plum/20",
+  Breakfast: "bg-turmeric-700 text-white border-white/70",
+  Lunch: "bg-gold text-lacquer border-white/70",
+  Dinner: "bg-lacquer text-white border-white/70",
+  Vegan: "bg-bamboo text-white border-white/70",
+  Dessert: "bg-plum text-white border-white/70",
 };
