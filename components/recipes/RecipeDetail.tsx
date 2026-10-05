@@ -17,6 +17,8 @@ import Alert, { LoadingBlock } from "@/components/ui/Alert";
 import { categoryAccent, categoryLabel } from "@/lib/category";
 import { youtubeEmbedUrl } from "@/lib/youtube";
 import RecipeImage from "@/components/recipe/RecipeImage";
+import { isMobileOrTablet } from "@/lib/device";
+
 function subscribeToLocation() {
   return () => {};
 }
@@ -32,24 +34,17 @@ function ShareLinks({ title }: { title: string }) {
   if (!url) return null;
   const encodedUrl = encodeURIComponent(url);
   const encodedTitle = encodeURIComponent(title);
-  const facebookShareUrl =
-    `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
-  /**
-   * Uses the native Web Share API on supported mobile browsers.
-   *
-   * On iOS/Android this opens the native share sheet, where
-   * Facebook can be selected if the Facebook app is installed.
-   *
-   * Falls back to the Facebook web share dialog when Web Share
-   * API is not available.
-   */
+  const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+
   async function handleFacebookShare() {
     const shareData: ShareData = {
       title,
       text: title,
       url,
     };
+
     if (
+      isMobileOrTablet() &&
       typeof navigator !== "undefined" &&
       typeof navigator.share === "function"
     ) {
@@ -63,22 +58,18 @@ function ShareLinks({ title }: { title: string }) {
         }
       } catch (error) {
         // User cancelled the native share sheet.
-        if (
-          error instanceof DOMException &&
-          error.name === "AbortError"
-        ) {
+        if (error instanceof DOMException && error.name === "AbortError") {
           return;
         }
+
         console.error("Web Share API failed:", error);
       }
     }
-    // Desktop / unsupported browser fallback.
-    window.open(
-      facebookShareUrl,
-      "_blank",
-      "noopener,noreferrer",
-    );
+
+    // PC / Laptop or unsupported Web Share API.
+    window.open(facebookShareUrl, "_blank", "noopener,noreferrer");
   }
+
   return (
     <div className="flex flex-wrap gap-2">
       <button
@@ -144,29 +135,22 @@ export default function RecipeDetail() {
           return;
         }
         setRecipe(item);
-        const [commentData, allRecipes, authorName] =
-          await Promise.all([
-            fetchComments(item.id),
-            fetchRecipes(),
-            getAuthorName(item.userId),
-          ]);
+        const [commentData, allRecipes, authorName] = await Promise.all([
+          fetchComments(item.id),
+          fetchRecipes(),
+          getAuthorName(item.userId),
+        ]);
         if (!alive) return;
         setComments(commentData);
         setAuthor(authorName);
         setRelated(
           allRecipes
-            .filter(
-              (x) =>
-                x.id !== item.id &&
-                x.category === item.category,
-            )
+            .filter((x) => x.id !== item.id && x.category === item.category)
             .slice(0, 12),
         );
       } catch {
         if (alive) {
-          setError(
-            "Không thể tải công thức. Vui lòng thử lại.",
-          );
+          setError("Không thể tải công thức. Vui lòng thử lại.");
         }
       } finally {
         if (alive) {
@@ -183,23 +167,11 @@ export default function RecipeDetail() {
     () => youtubeEmbedUrl(recipe?.youtubeUrl),
     [recipe?.youtubeUrl],
   );
-  const relatedItems = related.slice(
-    (relatedPage - 1) * 3,
-    relatedPage * 3,
-  );
-  const relatedPages = Math.max(
-    1,
-    Math.ceil(related.length / 3),
-  );
-  async function submitComment(
-    e: FormEvent<HTMLFormElement>,
-  ) {
+  const relatedItems = related.slice((relatedPage - 1) * 3, relatedPage * 3);
+  const relatedPages = Math.max(1, Math.ceil(related.length / 3));
+  async function submitComment(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (
-      !currentUser ||
-      !recipe ||
-      !commentText.trim()
-    ) {
+    if (!currentUser || !recipe || !commentText.trim()) {
       return;
     }
     setCommentBusy(true);
@@ -207,14 +179,10 @@ export default function RecipeDetail() {
       await addRecipeComment(recipe.id, {
         text: commentText.trim(),
         userId: currentUser.uid,
-        username:
-          currentUser.displayName ||
-          "Người dùng ẩn danh",
+        username: currentUser.displayName || "Người dùng ẩn danh",
       });
       setCommentText("");
-      setComments(
-        await fetchComments(recipe.id),
-      );
+      setComments(await fetchComments(recipe.id));
     } catch {
       setError("Không thể đăng bình luận.");
     } finally {
@@ -222,29 +190,20 @@ export default function RecipeDetail() {
     }
   }
   if (loading) {
-    return (
-      <LoadingBlock label="Đang mở trang món ngon..." />
-    );
+    return <LoadingBlock label="Đang mở trang món ngon..." />;
   }
   if (error || !recipe) {
     return (
       <div className="mx-auto max-w-2xl">
-        <Alert tone="warning">
-          {error || "Không tìm thấy công thức."}
-        </Alert>
+        <Alert tone="warning">{error || "Không tìm thấy công thức."}</Alert>
       </div>
     );
   }
-  const owner =
-    currentUser?.uid &&
-    recipe.userId === currentUser.uid;
+  const owner = currentUser?.uid && recipe.userId === currentUser.uid;
   return (
     <article className="mx-auto max-w-5xl">
       <div className="mb-5 text-sm text-muted">
-        <Link
-          href="/"
-          className="hover:text-lacquer"
-        >
+        <Link href="/" className="hover:text-lacquer">
           Bếp nhà Quỳnh
         </Link>
         <span className="mx-2">/</span>
@@ -261,11 +220,7 @@ export default function RecipeDetail() {
             className="object-cover"
             fallback={
               <div className="grid h-full place-items-center text-lacquer/20">
-                <Icon
-                  name="bowl"
-                  size={90}
-                  strokeWidth={1.2}
-                />
+                <Icon name="bowl" size={90} strokeWidth={1.2} />
               </div>
             }
           />
@@ -273,8 +228,7 @@ export default function RecipeDetail() {
           <div className="absolute bottom-5 left-5 right-5">
             <span
               className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold backdrop-blur ${
-                categoryAccent[recipe.category] ??
-                "bg-ivory/90 text-lacquer"
+                categoryAccent[recipe.category] ?? "bg-ivory/90 text-lacquer"
               }`}
             >
               {categoryLabel(recipe.category)}
@@ -292,32 +246,20 @@ export default function RecipeDetail() {
               </p>
               <div className="mt-5 rounded-2xl bg-cream/70 p-4">
                 <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-                  <Icon
-                    name="user"
-                    size={16}
-                    className="text-lacquer"
-                  />{" "}
-                  Tác giả: {author}
+                  <Icon name="user" size={16} className="text-lacquer" /> Tác
+                  giả: {author}
                 </div>
               </div>
               <div className="mt-7">
                 <h2 className="subheading">
-                  <Icon
-                    name="share"
-                    size={19}
-                  />{" "}
-                  Chia sẻ công thức
+                  <Icon name="share" size={19} /> Chia sẻ công thức
                 </h2>
                 <ShareLinks title={recipe.title} />
               </div>
               {embed && (
                 <section className="mt-8">
                   <h2 className="subheading">
-                    <Icon
-                      name="youtube"
-                      size={19}
-                    />{" "}
-                    Video hướng dẫn
+                    <Icon name="youtube" size={19} /> Video hướng dẫn
                   </h2>
                   <div className="aspect-video overflow-hidden rounded-2xl border border-border bg-black">
                     <iframe
@@ -331,61 +273,40 @@ export default function RecipeDetail() {
               )}
               <section className="mt-8">
                 <h2 className="subheading">
-                  <Icon
-                    name="list"
-                    size={19}
-                  />{" "}
-                  Nguyên liệu
+                  <Icon name="list" size={19} /> Nguyên liệu
                 </h2>
                 <ol className="mt-4 space-y-2">
-                  {recipe.ingredients.map(
-                    (item, index) => (
-                      <li
-                        key={`${item}-${index}`}
-                        className="flex gap-3 rounded-2xl border border-border/70 bg-cream/50 px-4 py-3 text-sm leading-6 text-ink"
-                      >
-                        <span className="grid size-7 shrink-0 place-items-center rounded-full bg-gold font-serif font-bold text-lacquer">
-                          {index + 1}
-                        </span>
-                        <span>{item}</span>
-                      </li>
-                    ),
-                  )}
+                  {recipe.ingredients.map((item, index) => (
+                    <li
+                      key={`${item}-${index}`}
+                      className="flex gap-3 rounded-2xl border border-border/70 bg-cream/50 px-4 py-3 text-sm leading-6 text-ink"
+                    >
+                      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-gold font-serif font-bold text-lacquer">
+                        {index + 1}
+                      </span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
                 </ol>
               </section>
               <section className="mt-8">
                 <h2 className="subheading">
-                  <Icon
-                    name="route"
-                    size={19}
-                  />{" "}
-                  Cách làm
+                  <Icon name="route" size={19} /> Cách làm
                 </h2>
                 <ol className="mt-4 space-y-4">
-                  {recipe.steps.map(
-                    (item, index) => (
-                      <li
-                        key={`${item}-${index}`}
-                        className="flex gap-4"
-                      >
-                        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-lacquer text-sm font-bold text-ivory shadow-sm">
-                          {index + 1}
-                        </span>
-                        <p className="pt-1 text-sm leading-7 text-ink">
-                          {item}
-                        </p>
-                      </li>
-                    ),
-                  )}
+                  {recipe.steps.map((item, index) => (
+                    <li key={`${item}-${index}`} className="flex gap-4">
+                      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-lacquer text-sm font-bold text-ivory shadow-sm">
+                        {index + 1}
+                      </span>
+                      <p className="pt-1 text-sm leading-7 text-ink">{item}</p>
+                    </li>
+                  ))}
                 </ol>
               </section>
               <section className="mt-10 border-t border-border pt-8">
                 <h2 className="subheading">
-                  <Icon
-                    name="comment"
-                    size={19}
-                  />{" "}
-                  Bình luận{" "}
+                  <Icon name="comment" size={19} /> Bình luận{" "}
                   <span className="text-sm font-sans font-medium text-muted">
                     ({comments.length})
                   </span>
@@ -399,16 +320,13 @@ export default function RecipeDetail() {
                       >
                         <div className="flex items-center justify-between gap-3">
                           <strong className="text-sm text-ink">
-                            {comment.username ||
-                              "Người dùng"}
+                            {comment.username || "Người dùng"}
                           </strong>
                           <span className="text-xs text-muted">
                             {comment.createdAt
                               ? new Date(
                                   comment.createdAt as string,
-                                ).toLocaleDateString(
-                                  "vi-VN",
-                                )
+                                ).toLocaleDateString("vi-VN")
                               : ""}
                           </span>
                         </div>
@@ -420,42 +338,28 @@ export default function RecipeDetail() {
                   </div>
                 ) : (
                   <p className="mt-4 rounded-2xl bg-cream/60 p-4 text-sm text-muted">
-                    Chưa có bình luận. Hãy là người
-                    đầu tiên góp chuyện!
+                    Chưa có bình luận. Hãy là người đầu tiên góp chuyện!
                   </p>
                 )}
                 <div className="mt-5">
                   {currentUser ? (
-                    <form
-                      onSubmit={submitComment}
-                    >
+                    <form onSubmit={submitComment}>
                       <textarea
                         value={commentText}
-                        onChange={(e) =>
-                          setCommentText(
-                            e.target.value,
-                          )
-                        }
+                        onChange={(e) => setCommentText(e.target.value)}
                         className="form-input min-h-28"
                         required
                         placeholder="Thêm bình luận của bạn..."
                       />
                       <button
-                        disabled={
-                          commentBusy ||
-                          !commentText.trim()
-                        }
+                        disabled={commentBusy || !commentText.trim()}
                         className="btn-primary mt-3"
                       >
                         {commentBusy ? (
                           "Đang đăng..."
                         ) : (
                           <>
-                            <Icon
-                              name="comment"
-                              size={16}
-                            />{" "}
-                            Đăng bình luận
+                            <Icon name="comment" size={16} /> Đăng bình luận
                           </>
                         )}
                       </button>
@@ -463,10 +367,7 @@ export default function RecipeDetail() {
                   ) : (
                     <Alert tone="warning">
                       Vui lòng{" "}
-                      <Link
-                        href="/dang-nhap"
-                        className="font-bold underline"
-                      >
+                      <Link href="/dang-nhap" className="font-bold underline">
                         đăng nhập
                       </Link>{" "}
                       để thêm bình luận.
@@ -486,20 +387,14 @@ export default function RecipeDetail() {
                       href={`/sua-cong-thuc/${recipe.slug}`}
                       className="btn-secondary"
                     >
-                      <Icon
-                        name="edit"
-                        size={15}
-                      />{" "}
-                      Chỉnh sửa
+                      <Icon name="edit" size={15} /> Chỉnh sửa
                     </Link>
                   </div>
                 </div>
               )}
               {related.length > 0 && (
                 <div>
-                  <h2 className="subheading text-lg">
-                    Món cùng danh mục
-                  </h2>
+                  <h2 className="subheading text-lg">Món cùng danh mục</h2>
                   <div className="mt-3 space-y-3">
                     {relatedItems.map((item) => (
                       <Link
@@ -508,9 +403,7 @@ export default function RecipeDetail() {
                         className="block rounded-2xl border border-border bg-cream/40 p-3 transition hover:-translate-y-0.5 hover:bg-cream"
                       >
                         <div className="text-xs font-bold text-muted">
-                          {categoryLabel(
-                            item.category,
-                          )}
+                          {categoryLabel(item.category)}
                         </div>
                         <div className="mt-1 font-serif text-lg font-bold text-ink">
                           {item.title}
@@ -522,32 +415,18 @@ export default function RecipeDetail() {
                     <div className="mt-3 flex justify-between">
                       <button
                         className="page-button"
-                        disabled={
-                          relatedPage === 1
-                        }
-                        onClick={() =>
-                          setRelatedPage(
-                            (p) => p - 1,
-                          )
-                        }
+                        disabled={relatedPage === 1}
+                        onClick={() => setRelatedPage((p) => p - 1)}
                       >
                         <Icon name="chevron-left" />
                       </button>
                       <span className="self-center text-xs text-muted">
-                        {relatedPage} /{" "}
-                        {relatedPages}
+                        {relatedPage} / {relatedPages}
                       </span>
                       <button
                         className="page-button"
-                        disabled={
-                          relatedPage ===
-                          relatedPages
-                        }
-                        onClick={() =>
-                          setRelatedPage(
-                            (p) => p + 1,
-                          )
-                        }
+                        disabled={relatedPage === relatedPages}
+                        onClick={() => setRelatedPage((p) => p + 1)}
                       >
                         <Icon name="chevron-right" />
                       </button>

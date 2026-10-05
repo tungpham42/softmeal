@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { isMobileOrTablet } from "@/lib/device";
 
 type BrandName = "facebook" | "x" | "linkedin";
 
@@ -30,11 +31,7 @@ function BrandMark({ name }: { name: BrandName }) {
   }
 
   return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="size-4 fill-current"
-    >
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="size-4 fill-current">
       <path d="M18.7 4h2.5l-5.5 6.3 6.5 9.7h-5.1l-4-5.9-5.1 5.9H5.5l5.9-6.7L5.2 4h5.2l3.6 5.3L18.7 4Zm-.9 14.3h1.4L9.8 5.6H8.3l9.5 12.7Z" />
     </svg>
   );
@@ -79,8 +76,7 @@ const shareMessages: Record<BrandName, string> = {
   facebook:
     "🔥 TÌNH CỜ LƯỚT THẤY MÀ THẤY ĐÓI NGANG 😋\n\nCó những món ăn không chỉ ngon — mà còn kéo cả ký ức gia đình quay về. ❤️\n\nMình vừa tìm thấy một món rất đáng để lưu lại cho mâm cơm tuần này. Ai mê món Việt, tag người hay rủ bạn vào bếp cùng! 👇",
 
-  x:
-    "🔥 Không biết tối nay ăn gì? Đây là tín hiệu bạn đang tìm một món Việt thật cuốn 😋\n\nNgon, dễ làm, đậm vị nhà — kiểu món nhìn một lần là muốn vào bếp ngay. 👇",
+  x: "🔥 Không biết tối nay ăn gì? Đây là tín hiệu bạn đang tìm một món Việt thật cuốn 😋\n\nNgon, dễ làm, đậm vị nhà — kiểu món nhìn một lần là muốn vào bếp ngay. 👇",
 
   linkedin:
     "🍲 Có những món ăn không chỉ tạo nên một bữa cơm, mà còn tạo nên những câu chuyện để nhớ.\n\nMình vừa khám phá một công thức mang đúng tinh thần đó: gần gũi, dễ áp dụng và đậm chất Việt. Một chút cảm hứng cho căn bếp và cho những bữa cơm có ý nghĩa. ✨\n\nRất đáng để lưu lại và chia sẻ cùng những người cũng yêu ẩm thực Việt.",
@@ -146,13 +142,13 @@ export default function HeroShare() {
       url: shareUrl,
     };
 
-    // Mobile browsers supporting Web Share API.
+    // Only use Web Share API on mobile/tablet.
     if (
+      isMobileOrTablet() &&
       typeof navigator !== "undefined" &&
       typeof navigator.share === "function"
     ) {
       try {
-        // Some browsers expose canShare(), some don't.
         if (
           typeof navigator.canShare !== "function" ||
           navigator.canShare(shareData)
@@ -162,10 +158,7 @@ export default function HeroShare() {
         }
       } catch (error) {
         // User closed/cancelled the native share sheet.
-        if (
-          error instanceof DOMException &&
-          error.name === "AbortError"
-        ) {
+        if (error instanceof DOMException && error.name === "AbortError") {
           return;
         }
 
@@ -173,12 +166,9 @@ export default function HeroShare() {
       }
     }
 
-    // Fallback for desktop/unsupported browsers.
-    window.open(
-      shareLinks.facebook,
-      "_blank",
-      "noopener,noreferrer",
-    );
+    // PC / Laptop / unsupported browser:
+    // Use Facebook's normal web share dialog.
+    window.open(shareLinks.facebook, "_blank", "noopener,noreferrer");
   }
 
   return (
@@ -191,10 +181,7 @@ export default function HeroShare() {
         Một cú chạm để món nhà lên sóng — rủ bạn bè vào bếp và lan tỏa cảm hứng.
       </p>
 
-      <div
-        className="mt-3 flex flex-wrap gap-2"
-        aria-label="Chia sẻ trang này"
-      >
+      <div className="mt-3 flex flex-wrap gap-2" aria-label="Chia sẻ trang này">
         {shareOptions.map(({ name, displayName, label }) => {
           // Facebook uses Web Share API.
           if (name === "facebook") {
