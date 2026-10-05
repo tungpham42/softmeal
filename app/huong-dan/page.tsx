@@ -27,12 +27,12 @@ const sections = [
   {
     title: "Tạo tài khoản",
     icon: "user-plus" as const,
-    text: "Chọn Đăng ký và dùng email/mật khẩu hoặc tài khoản Google. Sau khi đăng ký, bạn có thể bình luận và thêm công thức.",
+    text: "Chọn Đăng ký và dùng email/mật khẩu, tài khoản Google, Facebook, hoặc ẩn danh. Sau khi đăng ký, bạn có thể bình luận và thêm công thức.",
   },
   {
     title: "Khám phá công thức",
     icon: "search" as const,
-    text: "Trên trang chủ, nhập tên món hoặc nguyên liệu; lọc theo Bữa sáng, Bữa trưa, Bữa tối, Tráng miệng và sắp xếp theo tên hoặc ngày.",
+    text: "Trên trang chủ, nhập tên món hoặc nguyên liệu; lọc theo Bữa sáng, Bữa trưa, Bữa tối, Món chay và Tráng miệng và sắp xếp theo tên hoặc ngày.",
   },
   {
     title: "Chia sẻ công thức",
