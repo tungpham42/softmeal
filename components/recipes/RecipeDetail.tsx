@@ -229,6 +229,13 @@ export default function RecipeDetail() {
           Bếp nhà Quỳnh
         </Link>
         <span className="mx-2">/</span>
+        <Link
+          href={`/?category=${encodeURIComponent(recipe.category)}`}
+          className="hover:text-lacquer"
+        >
+          {categoryLabel(recipe.category)}
+        </Link>
+        <span className="mx-2">/</span>
         <span>{recipe.title}</span>
       </div>
       <div className="overflow-hidden rounded-[2rem] border border-border bg-card shadow-[0_18px_70px_rgba(83,43,23,0.1)]">
