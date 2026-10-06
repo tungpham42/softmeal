@@ -5,6 +5,7 @@ const labels: Record<string, string> = {
   Dinner: "Bữa tối",
   Vegan: "Món chay",
   Dessert: "Tráng miệng",
+  Wellness: "Món dưỡng sinh",
 };
 
 export function categoryLabel(category?: string) {
@@ -17,4 +18,5 @@ export const categoryAccent: Record<string, string> = {
   Dinner: "bg-lacquer text-white border-white/70",
   Vegan: "bg-bamboo text-white border-white/70",
   Dessert: "bg-plum text-white border-white/70",
+  Wellness: "bg-bamboo text-white border-white/70",
 };
