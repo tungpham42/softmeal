@@ -128,9 +128,7 @@ export async function generateMetadata({
 
   return {
     ...(metadataBase ? { metadataBase } : {}),
-    title: {
-      absolute: title,
-    },
+    title: title,
     description,
     keywords,
     applicationName: SITE_NAME,

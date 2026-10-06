@@ -105,7 +105,7 @@ export async function generateMetadata({
 
   return {
     ...(metadataBase ? { metadataBase } : {}),
-    title: { absolute: title },
+    title: title,
     description,
     keywords: buildKeywords(recipe),
     applicationName: SITE_NAME,
