@@ -123,11 +123,28 @@ export default function RecipeDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [commentBusy, setCommentBusy] = useState(false);
+  const [doneIngredients, setDoneIngredients] = useState<Set<number>>(
+    () => new Set(),
+  );
+  const [doneSteps, setDoneSteps] = useState<Set<number>>(() => new Set());
+  function toggleItem(
+    setter: (updater: (prev: Set<number>) => Set<number>) => void,
+    index: number,
+  ) {
+    setter((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  }
   useEffect(() => {
     let alive = true;
     async function load() {
       setLoading(true);
       setError("");
+      setDoneIngredients(new Set());
+      setDoneSteps(new Set());
       try {
         const item = await fetchRecipeBySlug(slug);
         if (!alive) return;
@@ -278,36 +295,93 @@ export default function RecipeDetail() {
               )}
               <section className="mt-8">
                 <h2 className="subheading">
-                  <Icon name="list" size={19} /> Nguyên liệu
+                  <Icon name="list" size={19} /> Nguyên liệu{" "}
+                  <span className="text-sm font-sans font-medium text-muted">
+                    ({recipe.ingredients.length})
+                  </span>
                 </h2>
-                <ol className="mt-4 space-y-2">
-                  {recipe.ingredients.map((item, index) => (
-                    <li
-                      key={`${item}-${index}`}
-                      className="flex gap-3 rounded-2xl border border-border/70 bg-cream/50 px-4 py-3 text-sm leading-6 text-ink"
-                    >
-                      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-gold font-serif font-bold text-lacquer">
-                        {index + 1}
-                      </span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ol>
+                <ul className="mt-4 grid gap-x-10 rounded-3xl bg-cream/50 px-5 py-2 sm:grid-cols-2 sm:px-6">
+                  {recipe.ingredients.map((item, index) => {
+                    const done = doneIngredients.has(index);
+                    return (
+                      <li key={`${item}-${index}`}>
+                        <button
+                          type="button"
+                          aria-pressed={done}
+                          onClick={() => toggleItem(setDoneIngredients, index)}
+                          className="group flex w-full items-start gap-3 border-b border-dashed border-border py-3 text-left text-sm leading-6 text-ink transition-colors hover:text-lacquer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lacquer"
+                        >
+                          <span
+                            aria-hidden
+                            className={`mt-2 size-2 shrink-0 rounded-full transition-all duration-200 ${
+                              done
+                                ? "scale-125 bg-lacquer"
+                                : "bg-gold group-hover:scale-150 group-hover:bg-lacquer"
+                            }`}
+                          />
+                          <span
+                            className={
+                              done
+                                ? "text-muted line-through decoration-lacquer/40"
+                                : ""
+                            }
+                          >
+                            {item}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
               </section>
               <section className="mt-8">
                 <h2 className="subheading">
                   <Icon name="route" size={19} /> Cách làm
                 </h2>
-                <ol className="mt-4 space-y-4">
-                  {recipe.steps.map((item, index) => (
-                    <li key={`${item}-${index}`} className="flex gap-4">
-                      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-lacquer text-sm font-bold text-ivory shadow-sm">
-                        {index + 1}
-                      </span>
-                      <p className="pt-1 text-sm leading-7 text-ink">{item}</p>
-                    </li>
-                  ))}
-                </ol>
+                <ul className="mt-5">
+                  {recipe.steps.map((item, index) => {
+                    const done = doneSteps.has(index);
+                    const last = index === recipe.steps.length - 1;
+                    return (
+                      <li key={`${item}-${index}`}>
+                        <button
+                          type="button"
+                          aria-pressed={done}
+                          onClick={() => toggleItem(setDoneSteps, index)}
+                          className={`group relative block w-full pl-9 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lacquer ${
+                            last ? "" : "pb-6"
+                          }`}
+                        >
+                          {!last && (
+                            <span
+                              aria-hidden
+                              className={`absolute bottom-0 left-[6px] top-6 w-0.5 rounded-full transition-colors duration-300 ${
+                                done ? "bg-lacquer" : "bg-gold/40"
+                              }`}
+                            />
+                          )}
+                          <span
+                            aria-hidden
+                            className={`absolute left-0 top-[7px] size-3.5 rounded-full border-2 border-lacquer transition-all duration-200 group-hover:ring-4 group-hover:ring-gold/30 ${
+                              done
+                                ? "bg-lacquer"
+                                : "bg-ivory group-hover:bg-gold"
+                            }`}
+                          />
+                          <span
+                            className={`block text-sm leading-7 transition-colors ${
+                              done
+                                ? "text-muted line-through decoration-lacquer/40"
+                                : "text-ink"
+                            }`}
+                          >
+                            {item}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
               </section>
               <section className="mt-10 border-t border-border pt-8">
                 <h2 className="subheading">
