@@ -2,8 +2,8 @@ export const RECIPE_CATEGORIES = [
   "Breakfast",
   "Lunch",
   "Dinner",
-  "Vegan",
   "Dessert",
+  "Vegan",
   "Wellness",
 ] as const;
 export type RecipeCategory = (typeof RECIPE_CATEGORIES)[number];

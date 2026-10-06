@@ -3,8 +3,8 @@ const labels: Record<string, string> = {
   Breakfast: "Bữa sáng",
   Lunch: "Bữa trưa",
   Dinner: "Bữa tối",
-  Vegan: "Món chay",
   Dessert: "Tráng miệng",
+  Vegan: "Món chay",
   Wellness: "Món dưỡng sinh",
 };
 
