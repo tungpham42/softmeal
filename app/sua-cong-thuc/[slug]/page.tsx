@@ -96,9 +96,7 @@ export async function generateMetadata({
 
   if (!recipe) {
     return {
-      title: {
-        absolute: `Chỉnh sửa công thức | ${SITE_NAME}`,
-      },
+      title: "Chỉnh sửa công thức",
       description:
         "Trang chỉnh sửa công thức trong Bếp nhà Quỳnh. Công thức không tồn tại hoặc đã được gỡ bỏ.",
       applicationName: SITE_NAME,
@@ -110,7 +108,7 @@ export async function generateMetadata({
   const canonical = getRecipeUrl(recipe.slug);
   const imageUrl = resolveUrl(recipe.imageUrl, metadataBase);
   const category = categoryLabel(recipe.category);
-  const title = `Chỉnh sửa "${recipe.title}" | ${SITE_NAME}`;
+  const title = `Chỉnh sửa "${recipe.title}"`;
   const description = truncate(
     `Chỉnh sửa và cập nhật công thức "${recipe.title}"${
       category ? `, thuộc nhóm ${category}` : ""

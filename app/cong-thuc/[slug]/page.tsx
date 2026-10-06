@@ -82,9 +82,7 @@ export async function generateMetadata({
 
   if (!recipe) {
     return {
-      title: {
-        absolute: `Không tìm thấy công thức | ${SITE_NAME}`,
-      },
+      title: "Không tìm thấy công thức",
       description:
         "Công thức món ăn không tồn tại hoặc đã được gỡ khỏi Bếp nhà Quỳnh.",
       robots: {
@@ -98,7 +96,7 @@ export async function generateMetadata({
   const canonical = getRecipeUrl(recipe.slug);
   const imageUrl = resolveUrl(recipe.imageUrl, metadataBase);
   const category = categoryLabel(recipe.category);
-  const title = `${recipe.title} | ${SITE_NAME}`;
+  const title = recipe.title;
   const description = truncate(
     recipe.description ||
       `Hướng dẫn nấu ${recipe.title}${category ? `, thuộc nhóm ${category}` : ""}, cùng nguyên liệu và các bước thực hiện chi tiết.`,
