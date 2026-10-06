@@ -31,6 +31,18 @@ function normalizeDate(value: unknown) {
   return undefined;
 }
 
+function normalizeCategory(value: unknown): Recipe["category"] {
+  const categories: Recipe["category"][] = [
+    "Breakfast",
+    "Lunch",
+    "Dinner",
+    "Dessert",
+    "Vegan",
+    "Wellness",
+  ];
+  return categories.find((category) => category === value) ?? "Breakfast";
+}
+
 export function normalizeRecipe(
   id: string,
   data: Record<string, unknown>,
@@ -44,7 +56,7 @@ export function normalizeRecipe(
       ? data.ingredients.map(String)
       : [],
     steps: Array.isArray(data.steps) ? data.steps.map(String) : [],
-    category: String(data.category ?? ""),
+    category: normalizeCategory(data.category),
     imageUrl: data.imageUrl ? String(data.imageUrl) : undefined,
     youtubeUrl: data.youtubeUrl ? String(data.youtubeUrl) : undefined,
     userId: data.userId ? String(data.userId) : undefined,
@@ -177,10 +189,16 @@ export async function fetchComments(recipeId: string) {
 
 export async function addRecipeComment(
   recipeId: string,
-  comment: Pick<Comment, "text" | "userId" | "username">,
+  comment: {
+    text: string;
+    username?: string;
+    userId?: string | null; // khách: undefined hoặc null đều được
+  },
 ) {
   await addDoc(collection(db, "recipes", recipeId, "comments"), {
-    ...comment,
+    text: comment.text,
+    username: comment.username ?? "Khách",
+    userId: comment.userId ?? null, // không bao giờ để undefined
     createdAt: new Date().toISOString(),
   });
 }

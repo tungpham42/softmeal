@@ -118,6 +118,7 @@ export default function RecipeDetail() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [related, setRelated] = useState<Recipe[]>([]);
   const [commentText, setCommentText] = useState("");
+  const [guestName, setGuestName] = useState("");
   const [relatedPage, setRelatedPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -171,19 +172,23 @@ export default function RecipeDetail() {
   const relatedPages = Math.max(1, Math.ceil(related.length / 3));
   async function submitComment(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!currentUser || !recipe || !commentText.trim()) {
+    if (!recipe || !commentText.trim()) {
       return;
     }
     setCommentBusy(true);
     try {
       await addRecipeComment(recipe.id, {
         text: commentText.trim(),
-        userId: currentUser.uid,
-        username: currentUser.displayName || "Người dùng ẩn danh",
+        // Guests have no account: userId is null and they pick their own name.
+        userId: currentUser?.uid,
+        username: currentUser
+          ? currentUser.displayName || "Người dùng ẩn danh"
+          : guestName.trim() || "Khách",
       });
       setCommentText("");
       setComments(await fetchComments(recipe.id));
-    } catch {
+    } catch (err) {
+      console.error("Comment error:", err);
       setError("Không thể đăng bình luận.");
     } finally {
       setCommentBusy(false);
@@ -342,37 +347,38 @@ export default function RecipeDetail() {
                   </p>
                 )}
                 <div className="mt-5">
-                  {currentUser ? (
-                    <form onSubmit={submitComment}>
-                      <textarea
-                        value={commentText}
-                        onChange={(e) => setCommentText(e.target.value)}
-                        className="form-input min-h-28"
-                        required
-                        placeholder="Thêm bình luận của bạn..."
+                  <form onSubmit={submitComment}>
+                    {!currentUser && (
+                      <input
+                        value={guestName}
+                        onChange={(e) => setGuestName(e.target.value)}
+                        className="form-input mb-3"
+                        maxLength={40}
+                        placeholder="Tên của bạn (không bắt buộc)"
+                        aria-label="Tên của bạn"
                       />
-                      <button
-                        disabled={commentBusy || !commentText.trim()}
-                        className="btn-primary mt-3"
-                      >
-                        {commentBusy ? (
-                          "Đang đăng..."
-                        ) : (
-                          <>
-                            <Icon name="comment" size={16} /> Đăng bình luận
-                          </>
-                        )}
-                      </button>
-                    </form>
-                  ) : (
-                    <Alert tone="warning">
-                      Vui lòng{" "}
-                      <Link href="/dang-nhap" className="font-bold underline">
-                        đăng nhập
-                      </Link>{" "}
-                      để thêm bình luận.
-                    </Alert>
-                  )}
+                    )}
+                    <textarea
+                      value={commentText}
+                      onChange={(e) => setCommentText(e.target.value)}
+                      className="form-input min-h-28"
+                      required
+                      maxLength={1000}
+                      placeholder="Thêm bình luận của bạn..."
+                    />
+                    <button
+                      disabled={commentBusy || !commentText.trim()}
+                      className="btn-primary mt-3"
+                    >
+                      {commentBusy ? (
+                        "Đang đăng..."
+                      ) : (
+                        <>
+                          <Icon name="comment" size={16} /> Đăng bình luận
+                        </>
+                      )}
+                    </button>
+                  </form>
                 </div>
               </section>
             </div>

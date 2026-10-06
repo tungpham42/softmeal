@@ -21,7 +21,7 @@ export interface Recipe {
   description: string;
   ingredients: string[];
   steps: string[];
-  category: string;
+  category: RecipeCategory;
   imageUrl?: string;
   youtubeUrl?: string;
   userId?: string;
