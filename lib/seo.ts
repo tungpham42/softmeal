@@ -7,6 +7,13 @@ export const DEFAULT_DESCRIPTION =
 export const DEFAULT_OG_DESCRIPTION =
   "Lưu giữ những món ngon và câu chuyện quanh mâm cơm Việt.";
 
+export const DEFAULT_OG_IMAGE = "/1200x630.jpg";
+const CATEGORY_OG_EXT = "jpg"; // đổi thành "jpg" nếu ảnh trong public/category là .jpg
+
+export function getCategoryOgImage(category: string) {
+  return `/category/${category.toLowerCase()}.${CATEGORY_OG_EXT}`;
+}
+
 export function getCategoryMeta(category?: string) {
   if (!isRecipeCategory(category)) {
     return {
@@ -14,6 +21,7 @@ export function getCategoryMeta(category?: string) {
       fullTitle: DEFAULT_TITLE,
       description: DEFAULT_DESCRIPTION,
       ogDescription: DEFAULT_OG_DESCRIPTION,
+      ogImage: DEFAULT_OG_IMAGE,
     };
   }
   const label = categoryLabel(category);
@@ -24,5 +32,6 @@ export function getCategoryMeta(category?: string) {
     fullTitle: `Công thức ${label} | ${SITE_NAME}`,
     description,
     ogDescription: description,
+    ogImage: getCategoryOgImage(category),
   };
 }

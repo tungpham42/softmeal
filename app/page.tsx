@@ -30,7 +30,7 @@ export async function generateMetadata({
       url: `${siteUrl}/?category=${value}`,
       siteName: SITE_NAME,
       images: [
-        { url: "/1200x630.jpg", width: 1200, height: 630, alt: meta.fullTitle },
+        { url: meta.ogImage, width: 1200, height: 630, alt: meta.fullTitle },
       ],
     },
   };

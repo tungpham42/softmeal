@@ -81,6 +81,7 @@ export default function RecipeExplorer() {
     setMeta("property", "og:url", url);
     setMeta("name", "twitter:title", meta.fullTitle);
     setMeta("name", "twitter:description", meta.ogDescription);
+    setMeta("property", "og:image", meta.ogImage);
     setCanonical(url);
   }, [category]);
 
