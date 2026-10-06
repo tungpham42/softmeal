@@ -8,9 +8,32 @@ import RecipeCard from "@/components/recipes/RecipeCard";
 import Pagination from "@/components/ui/Pagination";
 import Icon from "@/components/ui/Icon";
 import { LoadingBlock } from "@/components/ui/Alert";
+import { getCategoryMeta } from "@/lib/seo";
 
 const ITEMS_PER_PAGE = 12;
 const LOCATION_CHANGE_EVENT = "recipe-explorer-location-change";
+
+function setMeta(key: "name" | "property", id: string, content: string) {
+  let el = document.head.querySelector<HTMLMetaElement>(`meta[${key}="${id}"]`);
+  if (!el) {
+    el = document.createElement("meta");
+    el.setAttribute(key, id);
+    document.head.appendChild(el);
+  }
+  el.setAttribute("content", content);
+}
+
+function setCanonical(href: string) {
+  let el = document.head.querySelector<HTMLLinkElement>(
+    'link[rel="canonical"]',
+  );
+  if (!el) {
+    el = document.createElement("link");
+    el.rel = "canonical";
+    document.head.appendChild(el);
+  }
+  el.href = href;
+}
 
 function subscribeToLocation(callback: () => void) {
   window.addEventListener("popstate", callback);
@@ -46,6 +69,20 @@ export default function RecipeExplorer() {
       .catch(() => setError("Không thể tải công thức. Vui lòng thử lại."))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    const meta = getCategoryMeta(category);
+    const url = `${window.location.origin}/${category ? `?category=${category}` : ""}`;
+
+    document.title = meta.fullTitle;
+    setMeta("name", "description", meta.description);
+    setMeta("property", "og:title", meta.fullTitle);
+    setMeta("property", "og:description", meta.ogDescription);
+    setMeta("property", "og:url", url);
+    setMeta("name", "twitter:title", meta.fullTitle);
+    setMeta("name", "twitter:description", meta.ogDescription);
+    setCanonical(url);
+  }, [category]);
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();

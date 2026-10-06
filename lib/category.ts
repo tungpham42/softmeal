@@ -1,4 +1,8 @@
-export { RECIPE_CATEGORIES } from "@/lib/types";
+import { RECIPE_CATEGORIES } from "@/lib/types";
+import type { RecipeCategory } from "@/lib/types";
+
+export { RECIPE_CATEGORIES };
+
 const labels: Record<string, string> = {
   Breakfast: "Bữa sáng",
   Lunch: "Bữa trưa",
@@ -10,6 +14,10 @@ const labels: Record<string, string> = {
 
 export function categoryLabel(category?: string) {
   return category ? (labels[category] ?? category) : "Ẩm thực Việt";
+}
+
+export function isRecipeCategory(value?: string): value is RecipeCategory {
+  return !!value && (RECIPE_CATEGORIES as readonly string[]).includes(value);
 }
 
 export const categoryAccent: Record<string, string> = {

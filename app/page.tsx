@@ -1,8 +1,40 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import type { IconName } from "@/components/ui/Icon";
 import RecipeExplorer from "@/components/recipes/RecipeExplorer";
 import Icon from "@/components/ui/Icon";
 import HeroShare from "@/components/home/HeroShare";
+import { getCategoryMeta, SITE_NAME } from "@/lib/seo";
+
+type HomeProps = {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
+
+export async function generateMetadata({
+  searchParams,
+}: HomeProps): Promise<Metadata> {
+  const { category } = await searchParams;
+  const value = Array.isArray(category) ? category[0] : category;
+  const meta = getCategoryMeta(value);
+  if (meta.isDefault) return {};
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  return {
+    title: { absolute: meta.fullTitle }, // "Công thức Bữa sáng | Bếp nhà Quỳnh"
+    description: meta.description,
+    alternates: { canonical: `/?category=${value}` },
+    openGraph: {
+      title: meta.fullTitle,
+      description: meta.ogDescription,
+      type: "website",
+      url: `${siteUrl}/?category=${value}`,
+      siteName: SITE_NAME,
+      images: [
+        { url: "/1200x630.jpg", width: 1200, height: 630, alt: meta.fullTitle },
+      ],
+    },
+  };
+}
 
 export default function HomePage() {
   return (
