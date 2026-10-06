@@ -35,7 +35,7 @@ function EditorForm({
   const [description, setDescription] = useState("");
   const [ingredients, setIngredients] = useState("");
   const [steps, setSteps] = useState("");
-  const [category, setCategory] = useState("Dinner");
+  const [category, setCategory] = useState<Recipe["category"]>("Dinner");
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -198,7 +198,9 @@ function EditorForm({
               </span>
               <select
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onChange={(e) =>
+                  setCategory(e.target.value as Recipe["category"])
+                }
                 className="form-input"
               >
                 {RECIPE_CATEGORIES.map((item) => (
