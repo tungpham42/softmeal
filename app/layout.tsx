@@ -19,7 +19,10 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
   ),
   openGraph: {
-    title: "Bếp nhà Quỳnh — Món ăn & ký ức",
+    title: {
+      default: "Bếp nhà Quỳnh — Món ăn & ký ức",
+      template: "%s | Bếp nhà Quỳnh",
+    },
     description: "Lưu giữ những món ngon và câu chuyện quanh mâm cơm Việt.",
     type: "website",
     url: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
