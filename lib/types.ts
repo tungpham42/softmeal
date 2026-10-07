@@ -14,6 +14,18 @@ export type SortOption =
   | "dateAsc"
   | "dateDesc";
 
+export type RecipeNutrition = {
+  calories?: string;
+  proteinContent?: string;
+  carbohydrateContent?: string;
+  fatContent?: string;
+  saturatedFatContent?: string;
+  fiberContent?: string;
+  sugarContent?: string;
+  sodiumContent?: string;
+  cholesterolContent?: string;
+};
+
 export interface Recipe {
   id: string;
   title: string;
@@ -24,6 +36,7 @@ export interface Recipe {
   category: RecipeCategory;
   imageUrl?: string;
   youtubeUrl?: string;
+  nutrition?: RecipeNutrition;
   userId?: string;
   createdAt?: string;
   updatedAt?: string;

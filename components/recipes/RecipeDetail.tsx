@@ -17,6 +17,7 @@ import Alert, { LoadingBlock } from "@/components/ui/Alert";
 import { categoryAccent, categoryLabel } from "@/lib/category";
 import { youtubeEmbedUrl } from "@/lib/youtube";
 import RecipeImage from "@/components/recipe/RecipeImage";
+import { nutritionRows } from "@/lib/nutrition";
 import { isMobileOrTablet } from "@/lib/device";
 
 function subscribeToLocation() {
@@ -341,6 +342,27 @@ export default function RecipeDetail() {
                   })}
                 </ul>
               </section>
+              {nutritionRows(recipe.nutrition).length > 0 && (
+                <section className="mt-8">
+                  <h2 className="subheading">
+                    <Icon name="list" size={19} /> Dinh dưỡng{" "}
+                    <span className="text-sm font-sans font-medium text-muted">
+                      (mỗi khẩu phần)
+                    </span>
+                  </h2>
+                  <dl className="mt-4 grid gap-x-10 rounded-3xl bg-cream/50 px-5 py-2 sm:grid-cols-2 sm:px-6">
+                    {nutritionRows(recipe.nutrition).map((row) => (
+                      <div
+                        key={row.label}
+                        className="flex justify-between border-b border-dashed border-border py-3 text-sm"
+                      >
+                        <dt className="text-muted">{row.label}</dt>
+                        <dd className="font-semibold text-ink">{row.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </section>
+              )}
               <section className="mt-8">
                 <h2 className="subheading">
                   <Icon name="route" size={19} /> Cách làm

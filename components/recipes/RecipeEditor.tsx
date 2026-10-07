@@ -19,6 +19,13 @@ import Icon from "@/components/ui/Icon";
 import Alert, { LoadingBlock } from "@/components/ui/Alert";
 import RequireAuth from "@/components/auth/RequireAuth";
 import { extractYouTubeId, resolveYouTubeThumbnail } from "@/lib/youtube";
+import {
+  EMPTY_NUTRITION_FORM,
+  NUTRITION_FIELDS,
+  formToNutrition,
+  nutritionToForm,
+  type NutritionForm,
+} from "@/lib/nutrition";
 
 function EditorForm({
   mode,
@@ -43,6 +50,8 @@ function EditorForm({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [busy, setBusy] = useState(false);
+  const [nutrition, setNutrition] =
+    useState<NutritionForm>(EMPTY_NUTRITION_FORM);
 
   useEffect(() => {
     if (mode !== "edit" || !slug) return;
@@ -60,6 +69,7 @@ function EditorForm({
         setCategory(recipe.category);
         setYoutubeUrl(recipe.youtubeUrl ?? "");
         setImageUrl(recipe.imageUrl ?? "");
+        setNutrition(nutritionToForm(recipe.nutrition));
       })
       .catch(() => setError("Không thể tải công thức."))
       .finally(() => setInitialLoading(false));
@@ -119,6 +129,7 @@ function EditorForm({
           .filter(Boolean),
         youtubeUrl: youtubeUrl.trim(),
         imageUrl: finalImage,
+        nutrition: formToNutrition(nutrition),
         slug: finalSlug,
       };
       if (mode === "create") payload.userId = currentUser.uid;
@@ -259,6 +270,38 @@ function EditorForm({
                 }
               />
             </label>
+            <fieldset className="md:col-span-2">
+              <legend className="form-label">
+                <Icon name="list" size={15} /> Giá trị dinh dưỡng{" "}
+                <span className="font-normal text-muted">
+                  (tuỳ chọn, tính cho mỗi khẩu phần)
+                </span>
+              </legend>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {NUTRITION_FIELDS.map((field) => (
+                  <label key={field.key} className="block">
+                    <span className="mb-1 block text-xs text-muted">
+                      {field.label} ({field.unit})
+                    </span>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      step="any"
+                      value={nutrition[field.key]}
+                      onChange={(e) =>
+                        setNutrition((prev) => ({
+                          ...prev,
+                          [field.key]: e.target.value,
+                        }))
+                      }
+                      className="form-input"
+                      placeholder="0"
+                    />
+                  </label>
+                ))}
+              </div>
+            </fieldset>
             <div className="block md:col-span-2">
               <span className="form-label">
                 <Icon name="image" size={15} /> Ảnh món ăn
