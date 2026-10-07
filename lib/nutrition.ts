@@ -42,6 +42,24 @@ export const NUTRITION_FIELDS: ReadonlyArray<{
     unit: "mg",
     schemaUnit: "milligrams",
   },
+  {
+    key: "potassiumContent",
+    label: "Kali",
+    unit: "mg",
+    schemaUnit: "milligrams",
+  },
+  {
+    key: "ironContent",
+    label: "Sắt",
+    unit: "mg",
+    schemaUnit: "milligrams",
+  },
+  {
+    key: "zincContent",
+    label: "Kẽm",
+    unit: "mg",
+    schemaUnit: "milligrams",
+  },
 ];
 
 export type NutritionForm = Record<NutritionKey, string>;

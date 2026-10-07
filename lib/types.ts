@@ -24,6 +24,9 @@ export type RecipeNutrition = {
   sugarContent?: string;
   sodiumContent?: string;
   cholesterolContent?: string;
+  potassiumContent?: string;
+  ironContent?: string;
+  zincContent?: string;
 };
 
 export interface Recipe {
