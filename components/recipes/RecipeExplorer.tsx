@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { fetchRecipes } from "@/lib/firebase/data";
 import type { Recipe, SortOption } from "@/lib/types";
 import { categoryLabel, RECIPE_CATEGORIES } from "@/lib/category";
@@ -8,58 +9,20 @@ import RecipeCard from "@/components/recipes/RecipeCard";
 import Pagination from "@/components/ui/Pagination";
 import Icon from "@/components/ui/Icon";
 import { LoadingBlock } from "@/components/ui/Alert";
-import { getCategoryMeta } from "@/lib/seo";
 
 const ITEMS_PER_PAGE = 12;
-const LOCATION_CHANGE_EVENT = "recipe-explorer-location-change";
-
-function setMeta(key: "name" | "property", id: string, content: string) {
-  let el = document.head.querySelector<HTMLMetaElement>(`meta[${key}="${id}"]`);
-  if (!el) {
-    el = document.createElement("meta");
-    el.setAttribute(key, id);
-    document.head.appendChild(el);
-  }
-  el.setAttribute("content", content);
-}
-
-function setCanonical(href: string) {
-  let el = document.head.querySelector<HTMLLinkElement>(
-    'link[rel="canonical"]',
-  );
-  if (!el) {
-    el = document.createElement("link");
-    el.rel = "canonical";
-    document.head.appendChild(el);
-  }
-  el.href = href;
-}
-
-function subscribeToLocation(callback: () => void) {
-  window.addEventListener("popstate", callback);
-  window.addEventListener(LOCATION_CHANGE_EVENT, callback);
-  return () => {
-    window.removeEventListener("popstate", callback);
-    window.removeEventListener(LOCATION_CHANGE_EVENT, callback);
-  };
-}
-
-function getLocationSearch() {
-  return window.location.search;
-}
 
 export default function RecipeExplorer() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const search = searchParams.get("search") ?? "";
+  const category = searchParams.get("category") ?? "";
+  const sort = (searchParams.get("sort") as SortOption) || "alphabetAsc";
+  const page = Math.max(1, Number(searchParams.get("page") || 1));
+
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const locationSearch = useSyncExternalStore(
-    subscribeToLocation,
-    getLocationSearch,
-    () => "",
-  );
-  const params = new URLSearchParams(locationSearch);
-  const search = params.get("search") ?? "";
-  const category = params.get("category") ?? "";
-  const sort = (params.get("sort") as SortOption) || "alphabetAsc";
-  const page = Math.max(1, Number(params.get("page") || 1));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -69,21 +32,6 @@ export default function RecipeExplorer() {
       .catch(() => setError("Không thể tải công thức. Vui lòng thử lại."))
       .finally(() => setLoading(false));
   }, []);
-
-  useEffect(() => {
-    const meta = getCategoryMeta(category);
-    const url = `${window.location.origin}/${category ? `?category=${category}` : ""}`;
-
-    document.title = meta.fullTitle;
-    setMeta("name", "description", meta.description);
-    setMeta("property", "og:title", meta.fullTitle);
-    setMeta("property", "og:description", meta.ogDescription);
-    setMeta("property", "og:url", url);
-    setMeta("name", "twitter:title", meta.fullTitle);
-    setMeta("name", "twitter:description", meta.ogDescription);
-    setMeta("property", "og:image", meta.ogImage);
-    setCanonical(url);
-  }, [category]);
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -124,17 +72,22 @@ export default function RecipeExplorer() {
     nextCategory = category,
     nextSort = sort,
   ) {
-    const params = new URLSearchParams();
-    if (nextSearch) params.set("search", nextSearch);
-    if (nextCategory) params.set("category", nextCategory);
-    if (nextSort !== "alphabetAsc") params.set("sort", nextSort);
-    if (nextPage > 1) params.set("page", String(nextPage));
-    window.history.replaceState(
-      null,
-      "",
-      `${window.location.pathname}${params.toString() ? `?${params}` : ""}`,
-    );
-    window.dispatchEvent(new Event(LOCATION_CHANGE_EVENT));
+    const next = new URLSearchParams();
+    if (nextSearch) next.set("search", nextSearch);
+    if (nextCategory) next.set("category", nextCategory);
+    if (nextSort !== "alphabetAsc") next.set("sort", nextSort);
+    if (nextPage > 1) next.set("page", String(nextPage));
+
+    const qs = next.toString();
+    const url = `${pathname}${qs ? `?${qs}` : ""}`;
+
+    if (nextCategory !== category) {
+      // Category drives title/description/OG -> let the server re-run generateMetadata
+      router.replace(url, { scroll: false });
+    } else {
+      // Search / sort / page: client-only update, no server round-trip
+      window.history.replaceState(null, "", url);
+    }
   }
 
   function reset() {
@@ -169,10 +122,7 @@ export default function RecipeExplorer() {
             <span className="sr-only">Tìm kiếm công thức</span>
             <input
               value={search}
-              onChange={(e) => {
-                const value = e.target.value;
-                updateUrl(1, value, category, sort);
-              }}
+              onChange={(e) => updateUrl(1, e.target.value, category, sort)}
               className="form-input pr-11"
               placeholder="Tìm món ăn, nguyên liệu, tên công thức..."
             />
@@ -185,10 +135,7 @@ export default function RecipeExplorer() {
             <span className="sr-only">Danh mục</span>
             <select
               value={category}
-              onChange={(e) => {
-                const value = e.target.value;
-                updateUrl(1, search, value, sort);
-              }}
+              onChange={(e) => updateUrl(1, search, e.target.value, sort)}
               className="form-input"
             >
               <option value="">Tất cả danh mục</option>
@@ -203,10 +150,9 @@ export default function RecipeExplorer() {
             <span className="sr-only">Sắp xếp</span>
             <select
               value={sort}
-              onChange={(e) => {
-                const value = e.target.value as SortOption;
-                updateUrl(1, search, category, value);
-              }}
+              onChange={(e) =>
+                updateUrl(1, search, category, e.target.value as SortOption)
+              }
               className="form-input"
             >
               <option value="alphabetAsc">Tên A → Z</option>
