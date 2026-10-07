@@ -239,6 +239,7 @@ function getVideoThumbnailUrl(
 }
 
 const NON_SCHEMA_NUTRITION_KEYS = new Set([
+  "calciumContent",
   "potassiumContent",
   "ironContent",
   "zincContent",
