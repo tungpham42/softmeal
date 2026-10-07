@@ -21,6 +21,7 @@ export default function Header() {
   const { currentUser, isAdmin, loading } = useAuth();
   const alpine = { "x-data": "{ open: false, account: false }" } as const;
   const closeMobile = { "x-on:click": "open = false" } as const;
+  const closeAccount = { "x-on:click": "account = false" } as const;
 
   function handleHomeClick(e: MouseEvent<HTMLAnchorElement>) {
     // Let new-tab / modified clicks behave normally
@@ -86,10 +87,18 @@ export default function Header() {
             {loading ? (
               <span className="h-10 w-28 animate-pulse rounded-xl bg-ivory/10" />
             ) : currentUser ? (
-              <div className="relative">
+              <div
+                className="relative"
+                {...({
+                  "x-on:click.outside": "account = false",
+                  "x-on:keydown.escape.window": "account = false",
+                } as const)}
+              >
                 <button
                   type="button"
                   {...({ "x-on:click": "account = !account" } as const)}
+                  aria-haspopup="menu"
+                  {...({ ":aria-expanded": "account" } as const)}
                   className="inline-flex items-center gap-2 rounded-xl border border-ivory/20 bg-ivory/10 px-3 py-2 text-sm font-semibold text-ivory hover:bg-ivory/15"
                 >
                   <Icon name="user" size={16} />
@@ -100,19 +109,24 @@ export default function Header() {
                   {...({ "x-show": "account", "x-cloak": "" } as const)}
                   className="absolute right-0 mt-2 w-56 rounded-2xl border border-border bg-cream p-2 text-ink shadow-xl"
                 >
-                  <Link href="/ho-so" className="menu-link">
+                  <Link href="/ho-so" {...closeAccount} className="menu-link">
                     <Icon name="user" size={16} /> Hồ sơ
                   </Link>
-                  <Link href="/them" className="menu-link">
+                  <Link href="/them" {...closeAccount} className="menu-link">
                     <Icon name="plus" size={16} /> Thêm công thức
                   </Link>
                   {isAdmin && (
-                    <Link href="/quan-tri" className="menu-link">
+                    <Link
+                      href="/quan-tri"
+                      {...closeAccount}
+                      className="menu-link"
+                    >
                       <Icon name="settings" size={16} /> Quản trị
                     </Link>
                   )}
                   <button
-                    onClick={logout}
+                    onClick={() => void logout()}
+                    {...closeAccount}
                     className="menu-link w-full text-left"
                   >
                     <Icon name="logout" size={16} /> Đăng xuất
