@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import Link from "next/link";
 import type { IconName } from "@/components/ui/Icon";
 import RecipeExplorer from "@/components/recipes/RecipeExplorer";
 import Icon from "@/components/ui/Icon";
-import { LoadingBlock } from "@/components/ui/Alert";
 import HeroShare from "@/components/home/HeroShare";
 import { getCategoryMeta, SITE_NAME } from "@/lib/seo";
 
@@ -18,21 +16,18 @@ export async function generateMetadata({
   const { category } = await searchParams;
   const value = Array.isArray(category) ? category[0] : category;
   const meta = getCategoryMeta(value);
-
-  // Home: inherit title/description/OG from layout.tsx, just pin the canonical
-  if (meta.isDefault) return { alternates: { canonical: "/" } };
+  if (meta.isDefault) return {};
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  const canonical = `/?category=${encodeURIComponent(value ?? "")}`;
   return {
-    title: { absolute: meta.fullTitle },
+    title: { absolute: meta.fullTitle }, // "Công thức Bữa sáng | Bếp nhà Quỳnh"
     description: meta.description,
-    alternates: { canonical },
+    alternates: { canonical: `/?category=${value}` },
     openGraph: {
       title: meta.fullTitle,
       description: meta.ogDescription,
       type: "website",
-      url: `${siteUrl}${canonical}`,
+      url: `${siteUrl}/?category=${value}`,
       siteName: SITE_NAME,
       images: [
         { url: meta.ogImage, width: 1200, height: 630, alt: meta.fullTitle },
@@ -69,9 +64,7 @@ export default function HomePage() {
           <HeroShare />
         </div>
       </section>
-      <Suspense fallback={<LoadingBlock label="Đang mở sổ tay món ngon..." />}>
-        <RecipeExplorer />
-      </Suspense>
+      <RecipeExplorer />
       <section className="grid gap-4 md:grid-cols-3">
         {[
           [
