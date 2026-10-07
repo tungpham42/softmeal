@@ -15,6 +15,7 @@ import {
 import type { User } from "firebase/auth";
 import { auth, db } from "./client";
 import type { Comment, Recipe } from "@/lib/types";
+import { NUTRITION_FIELDS } from "@/lib/nutrition";
 
 function normalizeDate(value: unknown) {
   if (!value) return undefined;
@@ -43,6 +44,24 @@ function normalizeCategory(value: unknown): Recipe["category"] {
   return categories.find((category) => category === value) ?? "Breakfast";
 }
 
+function normalizeNutrition(value: unknown): Recipe["nutrition"] {
+  if (!value || typeof value !== "object") return undefined;
+
+  const source = value as Record<string, unknown>;
+  const result: NonNullable<Recipe["nutrition"]> = {};
+
+  for (const { key } of NUTRITION_FIELDS) {
+    const raw = source[key];
+    if (typeof raw === "string" && raw.trim()) {
+      result[key] = raw.trim();
+    } else if (typeof raw === "number" && Number.isFinite(raw)) {
+      result[key] = String(raw);
+    }
+  }
+
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
 export function normalizeRecipe(
   id: string,
   data: Record<string, unknown>,
@@ -59,6 +78,7 @@ export function normalizeRecipe(
     category: normalizeCategory(data.category),
     imageUrl: data.imageUrl ? String(data.imageUrl) : undefined,
     youtubeUrl: data.youtubeUrl ? String(data.youtubeUrl) : undefined,
+    nutrition: normalizeNutrition(data.nutrition),
     userId: data.userId ? String(data.userId) : undefined,
     createdAt: normalizeDate(data.createdAt as Recipe["createdAt"]),
     updatedAt: normalizeDate(data.updatedAt as Recipe["updatedAt"]),
