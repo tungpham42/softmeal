@@ -19,7 +19,7 @@ export type RecipeNutrition = {
   proteinContent?: string;
   carbohydrateContent?: string;
   fatContent?: string;
-  saturatedFatContent?: string;
+  calciumContent?: string;
   fiberContent?: string;
   sugarContent?: string;
   sodiumContent?: string;
