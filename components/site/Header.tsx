@@ -6,6 +6,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import Icon from "@/components/ui/Icon";
+import type { MouseEvent } from "react";
+import { requestRecipeExplorerReset } from "@/lib/recipeExplorerEvents";
 
 const navItems = [
   ["/", "Trang chủ", "home"],
@@ -20,6 +22,17 @@ export default function Header() {
   const alpine = { "x-data": "{ open: false, account: false }" } as const;
   const closeMobile = { "x-on:click": "open = false" } as const;
 
+  function handleHomeClick(e: MouseEvent<HTMLAnchorElement>) {
+    // Let new-tab / modified clicks behave normally
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0)
+      return;
+    if (pathname !== "/") return; // other pages: normal navigation to "/"
+
+    e.preventDefault();
+    requestRecipeExplorerReset();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   async function logout() {
     await signOut(auth);
     router.push("/");
@@ -31,6 +44,7 @@ export default function Header() {
         <div className="flex min-h-18 items-center justify-between gap-4 py-3">
           <Link
             href="/"
+            onClick={handleHomeClick}
             className="group flex items-center gap-3 text-ivory"
             aria-label="Bếp nhà Quỳnh - Trang chủ"
           >
@@ -55,6 +69,7 @@ export default function Header() {
               <Link
                 key={href}
                 href={href}
+                onClick={href === "/" ? handleHomeClick : undefined}
                 className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition ${
                   pathname === href
                     ? "bg-ivory text-lacquer"
@@ -146,6 +161,7 @@ export default function Header() {
               <Link
                 key={href}
                 href={href}
+                onClick={href === "/" ? handleHomeClick : undefined}
                 {...closeMobile}
                 className="flex items-center gap-3 rounded-xl px-3 py-3 font-semibold text-ivory/90 hover:bg-ivory/10"
               >

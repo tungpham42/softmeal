@@ -9,6 +9,7 @@ import Pagination from "@/components/ui/Pagination";
 import Icon from "@/components/ui/Icon";
 import { LoadingBlock } from "@/components/ui/Alert";
 import { getCategoryMeta } from "@/lib/seo";
+import { RECIPE_EXPLORER_RESET_EVENT } from "@/lib/recipeExplorerEvents";
 
 const ITEMS_PER_PAGE = 12;
 const LOCATION_CHANGE_EVENT = "recipe-explorer-location-change";
@@ -46,6 +47,25 @@ function subscribeToLocation(callback: () => void) {
 
 function getLocationSearch() {
   return window.location.search;
+}
+
+function writeUrl(
+  page: number,
+  search: string,
+  category: string,
+  sort: SortOption,
+) {
+  const params = new URLSearchParams();
+  if (search) params.set("search", search);
+  if (category) params.set("category", category);
+  if (sort !== "alphabetAsc") params.set("sort", sort);
+  if (page > 1) params.set("page", String(page));
+  window.history.replaceState(
+    null,
+    "",
+    `${window.location.pathname}${params.toString() ? `?${params}` : ""}`,
+  );
+  window.dispatchEvent(new Event(LOCATION_CHANGE_EVENT));
 }
 
 export default function RecipeExplorer() {
@@ -124,22 +144,19 @@ export default function RecipeExplorer() {
     nextCategory = category,
     nextSort = sort,
   ) {
-    const params = new URLSearchParams();
-    if (nextSearch) params.set("search", nextSearch);
-    if (nextCategory) params.set("category", nextCategory);
-    if (nextSort !== "alphabetAsc") params.set("sort", nextSort);
-    if (nextPage > 1) params.set("page", String(nextPage));
-    window.history.replaceState(
-      null,
-      "",
-      `${window.location.pathname}${params.toString() ? `?${params}` : ""}`,
-    );
-    window.dispatchEvent(new Event(LOCATION_CHANGE_EVENT));
+    writeUrl(nextPage, nextSearch, nextCategory, nextSort);
   }
 
   function reset() {
-    updateUrl(1, "", "", "alphabetAsc");
+    writeUrl(1, "", "", "alphabetAsc");
   }
+
+  useEffect(() => {
+    const onReset = () => writeUrl(1, "", "", "alphabetAsc");
+    window.addEventListener(RECIPE_EXPLORER_RESET_EVENT, onReset);
+    return () =>
+      window.removeEventListener(RECIPE_EXPLORER_RESET_EVENT, onReset);
+  }, []);
 
   return (
     <section>
