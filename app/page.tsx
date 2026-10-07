@@ -74,7 +74,7 @@ export default function HomePage() {
           ],
           [
             "Gợi ý cả tuần",
-            "Bốc thực đơn sáng — trưa — tối — tráng miệng theo sở thích.",
+            "Bốc thực đơn sáng — trưa — tối — tráng miệng - món chay - món dưỡng sinh theo sở thích.",
             "calendar",
           ],
           [
