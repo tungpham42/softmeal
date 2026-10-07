@@ -238,12 +238,21 @@ function getVideoThumbnailUrl(
   return imageUrl;
 }
 
+const NON_SCHEMA_NUTRITION_KEYS = new Set([
+  "potassiumContent",
+  "ironContent",
+  "zincContent",
+]);
+
 function getNutritionSchema(recipe: SeoRecipe) {
   const raw = recipe.nutrition;
   if (!raw || typeof raw !== "object") return undefined;
 
   const nutrition = Object.fromEntries(
-    Object.entries(raw).filter(([, value]) => getOptionalString(value)),
+    Object.entries(raw).filter(
+      ([key, value]) =>
+        !NON_SCHEMA_NUTRITION_KEYS.has(key) && getOptionalString(value),
+    ),
   );
 
   return Object.keys(nutrition).length > 0
