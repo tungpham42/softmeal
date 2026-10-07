@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Link from "next/link";
 import type { IconName } from "@/components/ui/Icon";
 import RecipeExplorer from "@/components/recipes/RecipeExplorer";
 import Icon from "@/components/ui/Icon";
+import { LoadingBlock } from "@/components/ui/Alert";
 import HeroShare from "@/components/home/HeroShare";
 import { getCategoryMeta, SITE_NAME } from "@/lib/seo";
 
@@ -67,7 +69,9 @@ export default function HomePage() {
           <HeroShare />
         </div>
       </section>
-      <RecipeExplorer />
+      <Suspense fallback={<LoadingBlock label="Đang mở sổ tay món ngon..." />}>
+        <RecipeExplorer />
+      </Suspense>
       <section className="grid gap-4 md:grid-cols-3">
         {[
           [
