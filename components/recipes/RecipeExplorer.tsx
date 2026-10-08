@@ -11,6 +11,7 @@ import { LoadingBlock } from "@/components/ui/Alert";
 import { getCategoryMeta } from "@/lib/seo";
 import { RECIPE_EXPLORER_RESET_EVENT } from "@/lib/recipeExplorerEvents";
 import { buildSearchIndex, scoreRecipe } from "@/lib/recipeSearch";
+import { isMobileOrTablet } from "@/lib/device";
 
 const ITEMS_PER_PAGE = 12;
 const LOCATION_CHANGE_EVENT = "recipe-explorer-location-change";
@@ -36,6 +37,9 @@ function setCanonical(href: string) {
   }
   el.href = href;
 }
+
+// The device type never changes during a session, so there is nothing to subscribe to.
+const subscribeNoop = () => () => {};
 
 function subscribeToLocation(callback: () => void) {
   window.addEventListener("popstate", callback);
@@ -71,6 +75,12 @@ function writeUrl(
 
 export default function RecipeExplorer() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  // false on the server and during hydration, then the real value on the client
+  const isMobile = useSyncExternalStore(
+    subscribeNoop,
+    isMobileOrTablet,
+    () => false,
+  );
   const locationSearch = useSyncExternalStore(
     subscribeToLocation,
     getLocationSearch,
@@ -170,8 +180,28 @@ export default function RecipeExplorer() {
       window.removeEventListener(RECIPE_EXPLORER_RESET_EVENT, onReset);
   }, []);
 
+  const searchInput = (
+    <label className="relative block">
+      <span className="sr-only">Tìm kiếm công thức</span>
+      <input
+        type="search"
+        value={search}
+        onChange={(e) => {
+          const value = e.target.value;
+          updateUrl(1, value, category, sort);
+        }}
+        className="form-input pr-11"
+        placeholder="Tìm món ăn, nguyên liệu, tên công thức..."
+      />
+      <Icon
+        name="search"
+        className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted"
+      />
+    </label>
+  );
+
   return (
-    <section>
+    <section className={isMobile ? "pb-28" : undefined}>
       <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <span className="eyebrow">
@@ -193,23 +223,14 @@ export default function RecipeExplorer() {
       </div>
 
       <div className="mb-8 rounded-3xl border border-border bg-card p-4 shadow-sm sm:p-5">
-        <div className="grid gap-3 lg:grid-cols-[1.4fr_0.7fr_0.7fr]">
-          <label className="relative block">
-            <span className="sr-only">Tìm kiếm công thức</span>
-            <input
-              value={search}
-              onChange={(e) => {
-                const value = e.target.value;
-                updateUrl(1, value, category, sort);
-              }}
-              className="form-input pr-11"
-              placeholder="Tìm món ăn, nguyên liệu, tên công thức..."
-            />
-            <Icon
-              name="search"
-              className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted"
-            />
-          </label>
+        <div
+          className={
+            isMobile
+              ? "grid gap-3 sm:grid-cols-2"
+              : "grid gap-3 lg:grid-cols-[1.4fr_0.7fr_0.7fr]"
+          }
+        >
+          {!isMobile && searchInput}
           <label>
             <span className="sr-only">Danh mục</span>
             <select
@@ -274,6 +295,17 @@ export default function RecipeExplorer() {
             onPageChange={updateUrl}
           />
         </>
+      )}
+
+      {isMobile && (
+        <div
+          className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 px-4 pt-3 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] backdrop-blur"
+          style={{
+            paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",
+          }}
+        >
+          <div className="mx-auto max-w-2xl">{searchInput}</div>
+        </div>
       )}
     </section>
   );
