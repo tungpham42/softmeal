@@ -20,7 +20,7 @@ export async function generateMetadata({
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   return {
-    title: { absolute: meta.fullTitle }, // "Công thức Bữa sáng | Bếp nhà Quỳnh"
+    title: { absolute: meta.fullTitle },
     description: meta.description,
     alternates: { canonical: `/?category=${value}` },
     openGraph: {

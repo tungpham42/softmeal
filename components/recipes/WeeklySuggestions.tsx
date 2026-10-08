@@ -7,6 +7,7 @@ import { categoryLabel, RECIPE_CATEGORIES } from "@/lib/category";
 import Link from "next/link";
 import Icon from "@/components/ui/Icon";
 import { LoadingBlock } from "@/components/ui/Alert";
+import { SITE_NAME } from "@/lib/seo";
 
 const days = [
   "Thứ Hai",
@@ -101,7 +102,7 @@ export default function WeeklySuggestions() {
           <h1 className="section-title">Gợi ý công thức theo tuần</h1>
 
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-            Chọn các nhóm món bạn muốn xuất hiện, rồi để Bếp nhà Quỳnh bốc thực
+            Chọn các nhóm món bạn muốn xuất hiện, rồi để {SITE_NAME} bốc thực
             đơn ngẫu nhiên.
           </p>
         </div>

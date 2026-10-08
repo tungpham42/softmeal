@@ -1,5 +1,21 @@
 import type { Metadata } from "next";
-export const metadata: Metadata = { title: "Chính sách bảo mật" };
+import { SITE_NAME } from "@/lib/seo";
+export const metadata: Metadata = {
+  title: "Chính sách bảo mật",
+  description: `Chính sách bảo mật ${SITE_NAME}`,
+  openGraph: {
+    title: "Chính sách bảo mật",
+    description: `Chính sách bảo mật ${SITE_NAME}`,
+    images: [
+      {
+        url: "/chinh-sach-bao-mat.jpg",
+        width: 1200,
+        height: 630,
+        alt: `Chính sách bảo mật ${SITE_NAME}`,
+      },
+    ],
+  },
+};
 export default function PrivacyPolicyPage() {
   return (
     <article className="mx-auto max-w-4xl rounded-[2rem] border border-border bg-card p-6 shadow-sm sm:p-8">
@@ -23,9 +39,9 @@ export default function PrivacyPolicyPage() {
         </p>
         <h2>Dịch vụ bên thứ ba</h2>
         <p>
-          Bếp nhà Quỳnh sử dụng Firebase cho xác thực và Firestore, Cloudinary
-          cho lưu trữ ảnh, và có thể dùng Google Analytics/Tag Manager cho thống
-          kê truy cập.
+          {SITE_NAME} sử dụng Firebase cho xác thực và Firestore, Cloudinary cho
+          lưu trữ ảnh, và có thể dùng Google Analytics/Tag Manager cho thống kê
+          truy cập.
         </p>
         <h2>Thông tin công khai</h2>
         <p>

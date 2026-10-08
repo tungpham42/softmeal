@@ -1,11 +1,14 @@
 import { categoryLabel, isRecipeCategory } from "@/lib/category";
 
 export const SITE_NAME = "Bếp nhà Quỳnh";
-export const DEFAULT_TITLE = "Bếp nhà Quỳnh — Món ăn & ký ức";
+export const SITE_URL = "https://monan.io.vn";
+export const DEFAULT_TITLE = `${SITE_NAME} — Món ăn & ký ức`;
 export const DEFAULT_DESCRIPTION =
   "Nền tảng chia sẻ công thức và gợi ý món ăn mang hương vị truyền thống Việt Nam.";
 export const DEFAULT_OG_DESCRIPTION =
   "Lưu giữ những món ngon và câu chuyện quanh mâm cơm Việt.";
+
+export const RECIPE_PATH = "/cong-thuc";
 
 export const DEFAULT_OG_IMAGE = "/1200x630.jpg";
 const CATEGORY_OG_EXT = "jpg"; // đổi thành "jpg" nếu ảnh trong public/category là .jpg

@@ -8,6 +8,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import Icon from "@/components/ui/Icon";
 import type { MouseEvent } from "react";
 import { requestRecipeExplorerReset } from "@/lib/recipeExplorerEvents";
+import { SITE_NAME } from "@/lib/seo";
 
 const navItems = [
   ["/", "Trang chủ", "home"],
@@ -52,14 +53,14 @@ export default function Header() {
             href="/"
             onClick={handleHomeClick}
             className="group flex items-center gap-3 text-ivory"
-            aria-label="Bếp nhà Quỳnh - Trang chủ"
+            aria-label={`${SITE_NAME} - Trang chủ`}
           >
             <span className="grid size-11 place-items-center rounded-2xl border border-gold/45 bg-ivory/10 shadow-inner">
               <Icon name="bowl" size={25} />
             </span>
             <span>
               <span className="block font-serif text-xl font-bold tracking-tight sm:text-2xl">
-                Bếp nhà Quỳnh
+                {SITE_NAME}
               </span>
               <span className="hidden text-[11px] uppercase tracking-[0.2em] text-gold/90 sm:block">
                 Món ăn & ký ức

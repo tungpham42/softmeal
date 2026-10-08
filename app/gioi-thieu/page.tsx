@@ -3,8 +3,7 @@ import Link from "next/link";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import { SITE_NAME } from "@/lib/seo";
 
-const description =
-  "Bếp nhà Quỳnh là nơi lưu giữ và chia sẻ công thức, gợi ý bữa ăn và những câu chuyện quanh mâm cơm Việt.";
+const description = `${SITE_NAME} là nơi lưu giữ và chia sẻ công thức, gợi ý bữa ăn và những câu chuyện quanh mâm cơm Việt."`;
 
 export const metadata: Metadata = {
   title: "Giới thiệu",
@@ -16,7 +15,7 @@ export const metadata: Metadata = {
     url: "/gioi-thieu",
     images: [
       {
-        url: "/1200x630.jpg",
+        url: "/gioi-thieu.jpg",
         width: 1200,
         height: 630,
         alt: `Giới thiệu ${SITE_NAME}`,

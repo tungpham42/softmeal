@@ -19,6 +19,7 @@ import { youtubeEmbedUrl } from "@/lib/youtube";
 import RecipeImage from "@/components/recipe/RecipeImage";
 import { nutritionRows } from "@/lib/nutrition";
 import { isMobileOrTablet } from "@/lib/device";
+import { SITE_NAME } from "@/lib/seo";
 
 function subscribeToLocation() {
   return () => {};
@@ -291,7 +292,7 @@ export default function RecipeDetail() {
     <article className="mx-auto max-w-5xl">
       <div className="mb-5 text-sm text-muted">
         <Link href="/" className="hover:text-lacquer">
-          Bếp nhà Quỳnh
+          {SITE_NAME}
         </Link>
         <span className="mx-2">/</span>
         <Link

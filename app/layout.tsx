@@ -8,32 +8,32 @@ import Footer from "@/components/site/Footer";
 import BackToTop from "@/components/site/BackToTop";
 import AlpineProvider from "@/components/site/AlpineProvider";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { SITE_NAME } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: {
-    default: "Bếp nhà Quỳnh — Món ăn & ký ức",
-    template: "%s | Bếp nhà Quỳnh",
+    default: `${SITE_NAME} — Món ăn & ký ức`,
+    template: `%s | ${SITE_NAME}`,
   },
-  description:
-    "Nền tảng chia sẻ công thức và gợi ý món ăn mang hương vị truyền thống Việt Nam.",
+  description: `Nền tảng chia sẻ công thức và gợi ý món ăn mang hương vị truyền thống Việt Nam.`,
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
   ),
   openGraph: {
     title: {
-      default: "Bếp nhà Quỳnh — Món ăn & ký ức",
-      template: "%s | Bếp nhà Quỳnh",
+      default: `${SITE_NAME} — Món ăn & ký ức`,
+      template: `%s | ${SITE_NAME}`,
     },
     description: "Lưu giữ những món ngon và câu chuyện quanh mâm cơm Việt.",
     type: "website",
     url: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-    siteName: "Bếp nhà Quỳnh",
+    siteName: SITE_NAME,
     images: [
       {
         url: "/1200x630.jpg",
         width: 1200,
         height: 630,
-        alt: "Bếp nhà Quỳnh — Món ăn & ký ức",
+        alt: `${SITE_NAME} — Món ăn & ký ức`,
       },
     ],
   },

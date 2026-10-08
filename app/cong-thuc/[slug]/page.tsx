@@ -4,10 +4,7 @@ import RecipeDetail from "@/components/recipes/RecipeDetail";
 import { categoryLabel } from "@/lib/category";
 import type { Recipe } from "@/lib/types";
 import { fetchRecipeBySlugServer } from "@/lib/firebase/server";
-
-const SITE_NAME = "Bếp nhà Quỳnh";
-const SITE_URL = "https://monan.io.vn";
-const RECIPE_PATH = "/cong-thuc";
+import { SITE_NAME, SITE_URL, RECIPE_PATH } from "@/lib/seo";
 
 const getRecipeBySlug = cache((slug: string) => fetchRecipeBySlugServer(slug));
 
@@ -83,8 +80,7 @@ export async function generateMetadata({
   if (!recipe) {
     return {
       title: "Không tìm thấy công thức",
-      description:
-        "Công thức món ăn không tồn tại hoặc đã được gỡ khỏi Bếp nhà Quỳnh.",
+      description: `Công thức món ăn không tồn tại hoặc đã được gỡ khỏi ${SITE_NAME}.`,
       robots: {
         index: false,
         follow: true,

@@ -3,9 +3,9 @@ import Link from "next/link";
 import ContactForm from "@/components/site/ContactForm";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import { CONTACT, phoneHref } from "@/lib/contact";
+import { SITE_NAME } from "@/lib/seo";
 
-const description =
-  "Liên hệ Bếp nhà Quỳnh để góp ý, nhận hỗ trợ hoặc trao đổi hợp tác. Chúng tôi luôn sẵn lòng lắng nghe.";
+const description = `Liên hệ ${SITE_NAME} để góp ý, nhận hỗ trợ hoặc trao đổi hợp tác. Chúng tôi luôn sẵn lòng lắng nghe.`;
 
 export const metadata: Metadata = {
   title: "Liên hệ",
@@ -17,10 +17,10 @@ export const metadata: Metadata = {
     url: "/lien-he",
     images: [
       {
-        url: "/1200x630.jpg",
+        url: "/lien-he.jpg",
         width: 1200,
         height: 630,
-        alt: "Liên hệ Bếp nhà Quỳnh",
+        alt: `Liên hệ ${SITE_NAME}`,
       },
     ],
   },

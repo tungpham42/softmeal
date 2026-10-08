@@ -4,9 +4,7 @@ import { EditRecipePage } from "@/components/recipes/RecipeEditor";
 import { fetchRecipeBySlugServer } from "@/lib/firebase/server";
 import { categoryLabel } from "@/lib/category";
 import type { Recipe } from "@/lib/types";
-
-const SITE_NAME = "Bếp nhà Quỳnh";
-const RECIPE_PATH = "/cong-thuc";
+import { SITE_NAME, RECIPE_PATH } from "@/lib/seo";
 
 const getRecipeBySlug = cache((slug: string) => fetchRecipeBySlugServer(slug));
 
@@ -97,8 +95,7 @@ export async function generateMetadata({
   if (!recipe) {
     return {
       title: "Chỉnh sửa công thức",
-      description:
-        "Trang chỉnh sửa công thức trong Bếp nhà Quỳnh. Công thức không tồn tại hoặc đã được gỡ bỏ.",
+      description: `Trang chỉnh sửa công thức trong ${SITE_NAME}. Công thức không tồn tại hoặc đã được gỡ bỏ.`,
       applicationName: SITE_NAME,
       robots: noIndexRobots,
     };

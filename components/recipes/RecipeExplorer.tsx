@@ -8,7 +8,7 @@ import RecipeCard from "@/components/recipes/RecipeCard";
 import Pagination from "@/components/ui/Pagination";
 import Icon from "@/components/ui/Icon";
 import { LoadingBlock } from "@/components/ui/Alert";
-import { getCategoryMeta } from "@/lib/seo";
+import { getCategoryMeta, SITE_NAME } from "@/lib/seo";
 import { RECIPE_EXPLORER_RESET_EVENT } from "@/lib/recipeExplorerEvents";
 import { buildSearchIndex, scoreRecipe } from "@/lib/recipeSearch";
 import { isMobileOrTablet } from "@/lib/device";
@@ -205,7 +205,7 @@ export default function RecipeExplorer() {
       <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <span className="eyebrow">
-            <Icon name="bowl" size={15} /> Bếp nhà Việt
+            <Icon name="bowl" size={15} /> {SITE_NAME}
           </span>
           <h2 className="section-title">Khám phá công thức</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">

@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { isMobileOrTablet } from "@/lib/device";
+import { SITE_NAME } from "@/lib/seo";
 
 type BrandName = "facebook" | "x" | "linkedin";
 
@@ -137,7 +138,7 @@ export default function HeroShare() {
     }
 
     const shareData: ShareData = {
-      title: "Bếp nhà Quỳnh",
+      title: SITE_NAME,
       text: shareMessages.facebook,
       url: shareUrl,
     };
