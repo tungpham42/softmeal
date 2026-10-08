@@ -25,20 +25,14 @@ export const NUTRITION_FIELDS: ReadonlyArray<{
   { key: "fiberContent", label: "Chất xơ", unit: "g", schemaUnit: "grams" },
   { key: "sugarContent", label: "Đường", unit: "g", schemaUnit: "grams" },
   {
-    key: "calciumContent",
-    label: "Canxi",
-    unit: "mg",
-    schemaUnit: "milligrams",
-  },
-  {
     key: "sodiumContent",
     label: "Natri",
     unit: "mg",
     schemaUnit: "milligrams",
   },
   {
-    key: "cholesterolContent",
-    label: "Cholesterol",
+    key: "calciumContent",
+    label: "Canxi",
     unit: "mg",
     schemaUnit: "milligrams",
   },
@@ -57,6 +51,12 @@ export const NUTRITION_FIELDS: ReadonlyArray<{
   {
     key: "zincContent",
     label: "Kẽm",
+    unit: "mg",
+    schemaUnit: "milligrams",
+  },
+  {
+    key: "cholesterolContent",
+    label: "Cholesterol",
     unit: "mg",
     schemaUnit: "milligrams",
   },

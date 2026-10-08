@@ -21,12 +21,12 @@ export type RecipeNutrition = {
   fatContent?: string;
   fiberContent?: string;
   sugarContent?: string;
-  calciumContent?: string;
   sodiumContent?: string;
-  cholesterolContent?: string;
+  calciumContent?: string;
   potassiumContent?: string;
   ironContent?: string;
   zincContent?: string;
+  cholesterolContent?: string;
 };
 
 export interface Recipe {
