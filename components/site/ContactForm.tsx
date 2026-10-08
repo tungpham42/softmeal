@@ -4,6 +4,7 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 import Icon from "@/components/ui/Icon";
 import Alert from "@/components/ui/Alert";
+import { SITE_NAME } from "@/lib/seo";
 import {
   CONTACT_TOPICS,
   MAX_MESSAGE,
@@ -14,6 +15,111 @@ import {
   type ContactErrors as Errors,
 } from "@/lib/contactValidation";
 
+/* Public address the visitor's mail app will write to.
+   NEXT_PUBLIC_ vars must be referenced statically so Next.js can inline them. */
+const TO_EMAIL = (
+  process.env.NEXT_PUBLIC_CONTACT_EMAIL ||
+  process.env.NEXT_PUBLIC_ADMIN_EMAIL ||
+  ""
+).trim();
+
+/* Many mail clients / OS handlers choke on very long mailto: URLs
+   (Windows Outlook ~2000 chars). Stay safely below that. */
+const MAX_MAILTO_LENGTH = 1800;
+
+type Draft = {
+  to: string;
+  subject: string;
+  body: string; // full text, "\n" line breaks
+  mailto: string; // possibly shortened to fit URL limits
+  truncated: boolean;
+};
+
+function buildMailto(to: string, subject: string, body: string) {
+  const make = (b: string) =>
+    `mailto:${encodeURIComponent(to).replace(/%40/g, "@")}` +
+    `?subject=${encodeURIComponent(subject)}` +
+    // RFC 6068: line breaks in the body are %0D%0A
+    `&body=${encodeURIComponent(b.replace(/\r?\n/g, "\r\n"))}`;
+
+  let url = make(body);
+  if (url.length <= MAX_MAILTO_LENGTH) return { url, truncated: false };
+
+  const note = "\n\n[...] (nội dung đầy đủ đã được sao chép, hãy dán vào đây)";
+  let cut = body.length;
+  while (
+    cut > 0 &&
+    make(body.slice(0, cut) + note).length > MAX_MAILTO_LENGTH
+  ) {
+    cut -= 50;
+  }
+  url = make(body.slice(0, Math.max(cut, 0)) + note);
+  return { url, truncated: true };
+}
+
+function buildDraft(
+  name: string,
+  email: string,
+  topic: string,
+  message: string,
+): Draft {
+  const cleanName = name.replace(/[\r\n\t]+/g, " ").trim();
+  const subject = `[${SITE_NAME}] ${topic} — ${cleanName}`;
+  const body = [
+    message.trim(),
+    "",
+    "—",
+    `Họ tên: ${cleanName}`,
+    `Email: ${email.trim()}`,
+    `Chủ đề: ${topic}`,
+  ].join("\n");
+  const { url, truncated } = buildMailto(TO_EMAIL, subject, body);
+  return { to: TO_EMAIL, subject, body, mailto: url, truncated };
+}
+
+/* Webmail compose links for people without a desktop mail app. */
+function webmailLinks(d: Draft) {
+  const to = encodeURIComponent(d.to);
+  const su = encodeURIComponent(d.subject);
+  const body = encodeURIComponent(d.body);
+  return [
+    {
+      label: "Gmail",
+      href: `https://mail.google.com/mail/?view=cm&fs=1&to=${to}&su=${su}&body=${body}`,
+    },
+    {
+      label: "Outlook",
+      href: `https://outlook.live.com/mail/0/deeplink/compose?to=${to}&subject=${su}&body=${body}`,
+    },
+    {
+      label: "Yahoo Mail",
+      href: `https://compose.mail.yahoo.com/?to=${to}&subject=${su}&body=${body}`,
+    },
+  ];
+}
+
+async function copyText(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
+    }
+  }
+}
+
 function FieldError({ id, text }: { id: string; text?: string }) {
   if (!text) return null;
   return (
@@ -23,20 +129,22 @@ function FieldError({ id, text }: { id: string; text?: string }) {
   );
 }
 
+const fallbackBtn =
+  "inline-flex items-center gap-1.5 rounded-lg border border-current/30 px-3 py-1.5 text-sm font-medium hover:bg-black/5";
+
 export default function ContactForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [topic, setTopic] = useState<string>(CONTACT_TOPICS[0]);
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<Errors>({});
-  const [website, setWebsite] = useState(""); // honeypot
-  const [busy, setBusy] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [copied, setCopied] = useState<boolean | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy) return;
-    setSent(false);
+    setDraft(null);
+    setCopied(null);
 
     const next: Errors = {
       name: validateName(name) || undefined,
@@ -50,57 +158,31 @@ export default function ContactForm() {
       return;
     }
 
-    setBusy(true);
-    try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, topic, message, website }),
-      });
-      const data: { ok?: boolean; errors?: Errors } = await res
-        .json()
-        .catch(() => ({}));
-
-      if (res.ok && data.ok) {
-        setSent(true);
-        setErrors({});
-        setName("");
-        setEmail("");
-        setMessage("");
-        setTopic(CONTACT_TOPICS[0]);
-        return;
-      }
-      setErrors(
-        data.errors ?? {
-          form: "Không gửi được lời nhắn. Vui lòng thử lại sau.",
-        },
-      );
-    } catch {
+    if (!TO_EMAIL) {
       setErrors({
-        form: "Không thể kết nối tới máy chủ. Vui lòng kiểm tra mạng và thử lại.",
+        form: "Chưa cấu hình email nhận thư (NEXT_PUBLIC_CONTACT_EMAIL). Vui lòng thử lại sau.",
       });
-    } finally {
-      setBusy(false);
+      return;
     }
+
+    const d = buildDraft(name, email, topic, message);
+    setDraft(d);
+
+    // If the URL had to be shortened, the full text goes to the clipboard.
+    if (d.truncated) setCopied(await copyText(d.body));
+
+    // Navigating to mailto: hands off to the default mail app without
+    // leaving the page, and is not blocked like window.open() popups.
+    window.location.href = d.mailto;
+  }
+
+  async function handleCopy() {
+    if (!draft) return;
+    setCopied(await copyText(`${draft.subject}\n\n${draft.body}`));
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-      {/* Honeypot: hidden from people, bots tend to fill it */}
-      <div
-        aria-hidden="true"
-        className="absolute -left-[9999px] h-0 w-0 overflow-hidden"
-      >
-        <label htmlFor="contact-website">Website</label>
-        <input
-          id="contact-website"
-          name="website"
-          tabIndex={-1}
-          autoComplete="off"
-          value={website}
-          onChange={(e) => setWebsite(e.target.value)}
-        />
-      </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="contact-name" className="form-label">
@@ -207,19 +289,61 @@ export default function ContactForm() {
       </div>
 
       {errors.form && <Alert tone="danger">{errors.form}</Alert>}
-      {sent && (
+
+      {draft && (
         <Alert tone="success">
-          Cảm ơn bạn! Lời nhắn đã được gửi thành công. Chúng tôi sẽ phản hồi qua
-          email sớm nhất có thể.
+          <p>
+            Chúng tôi đã mở ứng dụng email của bạn với nội dung soạn sẵn. Hãy
+            nhấn <b>Gửi</b> trong ứng dụng email để hoàn tất.
+          </p>
+          {draft.truncated && (
+            <p className="mt-2">
+              Nội dung khá dài nên chỉ một phần được điền sẵn.{" "}
+              {copied
+                ? "Bản đầy đủ đã được sao chép, hãy dán (Ctrl+V) vào thư."
+                : "Hãy dùng nút “Sao chép nội dung” bên dưới rồi dán vào thư."}
+            </p>
+          )}
+          <p className="mt-3 text-sm">
+            Không thấy ứng dụng email mở ra? Hãy chọn một cách khác:
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {webmailLinks(draft).map((l) => (
+              <a
+                key={l.label}
+                href={l.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={fallbackBtn}
+              >
+                {l.label}
+              </a>
+            ))}
+            <a href={draft.mailto} className={fallbackBtn}>
+              Thử lại ứng dụng email
+            </a>
+            <button type="button" onClick={handleCopy} className={fallbackBtn}>
+              Sao chép nội dung
+            </button>
+          </div>
+          <p className="mt-3 text-sm">
+            Hoặc tự gửi thư tới <b>{draft.to}</b>.
+          </p>
+          {copied === true && (
+            <p className="mt-1 text-sm" role="status">
+              Đã sao chép vào clipboard.
+            </p>
+          )}
+          {copied === false && (
+            <p className="mt-1 text-sm" role="status">
+              Không thể sao chép tự động, vui lòng chép thủ công.
+            </p>
+          )}
         </Alert>
       )}
 
-      <button
-        type="submit"
-        disabled={busy}
-        className="btn-primary w-full sm:w-auto"
-      >
-        <Icon name="send" size={17} /> {busy ? "Đang gửi..." : "Gửi lời nhắn"}
+      <button type="submit" className="btn-primary w-full sm:w-auto">
+        <Icon name="send" size={17} /> Mở ứng dụng email để gửi
       </button>
     </form>
   );
