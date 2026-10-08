@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-export const metadata: Metadata = { title: "Privacy Policy" };
+export const metadata: Metadata = { title: "Chính sách bảo mật" };
 export default function PrivacyPolicyPage() {
   return (
     <article className="mx-auto max-w-4xl rounded-[2rem] border border-border bg-card p-6 shadow-sm sm:p-8">
       <div className="prose-viet">
         <h1 className="font-serif text-4xl font-bold text-lacquer">
-          Privacy Policy
+          Chính sách bảo mật
         </h1>
         <p className="mt-2 text-sm text-muted">
           Cập nhật: 04 tháng 10 năm 2026

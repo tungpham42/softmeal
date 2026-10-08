@@ -15,6 +15,11 @@ const navItems = [
   ["/huong-dan", "Hướng dẫn", "book"],
 ] as const;
 
+const infoItems = [
+  ["/gioi-thieu", "Giới thiệu", "bowl"],
+  ["/lien-he", "Liên hệ", "mail"],
+] as const;
+
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
@@ -72,6 +77,20 @@ export default function Header() {
                 href={href}
                 onClick={href === "/" ? handleHomeClick : undefined}
                 className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition ${
+                  pathname === href
+                    ? "bg-ivory text-lacquer"
+                    : "text-ivory/90 hover:bg-ivory/10 hover:text-ivory"
+                }`}
+              >
+                <Icon name={icon} size={17} />
+                {label}
+              </Link>
+            ))}
+            {infoItems.map(([href, label, icon]) => (
+              <Link
+                key={href}
+                href={href}
+                className={`hidden items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition xl:inline-flex ${
                   pathname === href
                     ? "bg-ivory text-lacquer"
                     : "text-ivory/90 hover:bg-ivory/10 hover:text-ivory"
@@ -176,6 +195,16 @@ export default function Header() {
                 key={href}
                 href={href}
                 onClick={href === "/" ? handleHomeClick : undefined}
+                {...closeMobile}
+                className="flex items-center gap-3 rounded-xl px-3 py-3 font-semibold text-ivory/90 hover:bg-ivory/10"
+              >
+                <Icon name={icon} size={18} /> {label}
+              </Link>
+            ))}
+            {infoItems.map(([href, label, icon]) => (
+              <Link
+                key={href}
+                href={href}
                 {...closeMobile}
                 className="flex items-center gap-3 rounded-xl px-3 py-3 font-semibold text-ivory/90 hover:bg-ivory/10"
               >

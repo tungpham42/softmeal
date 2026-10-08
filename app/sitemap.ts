@@ -5,7 +5,7 @@ export const revalidate = 3600;
 
 function getSiteUrl() {
   return (
-    process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/+$/, "") ||
+    process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, "") ||
     "http://localhost:3000"
   );
 }
@@ -37,7 +37,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     },
     {
-      url: `${siteUrl}/privacy-policy`,
+      url: `${siteUrl}/gioi-thieu`,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${siteUrl}/lien-he`,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${siteUrl}/chinh-sach-bao-mat`,
       changeFrequency: "yearly",
       priority: 0.3,
     },

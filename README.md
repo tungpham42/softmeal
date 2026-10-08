@@ -29,7 +29,7 @@ The UI uses a warm traditional Vietnamese palette inspired by lacquer red, old p
 - `/ho-so` — profile and password management
 - `/quan-tri` — admin recipe moderation
 - `/huong-dan` — usage guide
-- `/privacy-policy` — privacy page
+- `/chinh-sach-bao-mat` — privacy page
 
 ## Environment
 

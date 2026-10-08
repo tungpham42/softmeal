@@ -13,9 +13,18 @@ export default function Footer() {
             Lưu giữ những món ngon, câu chuyện và ký ức quanh mâm cơm Việt.
           </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          {" "}
+          <Link href="/gioi-thieu" className="hover:text-lacquer">
+            Giới thiệu{" "}
+          </Link>
+          <span className="text-border">•</span>{" "}
+          <Link href="/lien-he" className="hover:text-lacquer">
+            Liên hệ{" "}
+          </Link>
+          <span className="text-border">•</span>
           <a
-            href="https://tungpham42.github.io"
+            href="https://soft.io.vn"
             target="_blank"
             rel="noreferrer"
             className="hover:text-lacquer"
@@ -23,8 +32,8 @@ export default function Footer() {
             Phạm Tùng
           </a>
           <span className="text-border">•</span>
-          <Link href="/privacy-policy" className="hover:text-lacquer">
-            Privacy Policy
+          <Link href="/chinh-sach-bao-mat" className="hover:text-lacquer">
+            Chính sách bảo mậts
           </Link>
         </div>
       </div>

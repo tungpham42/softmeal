@@ -35,7 +35,11 @@ export type IconName =
   | "linkedin"
   | "check"
   | "menu"
-  | "close";
+  | "close"
+  | "phone"
+  | "map-pin"
+  | "send"
+  | "heart";
 
 const paths: Record<IconName, ReactNode> = {
   home: <path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />,
@@ -206,6 +210,19 @@ const paths: Record<IconName, ReactNode> = {
     <>
       <path d="M6 6l12 12M18 6 6 18" />
     </>
+  ),
+  phone: (
+    <path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z" />
+  ),
+  "map-pin": (
+    <>
+      <path d="M12 21s7-6.2 7-11a7 7 0 0 0-14 0c0 4.8 7 11 7 11z" />
+      <circle cx="12" cy="10" r="2.5" />
+    </>
+  ),
+  send: <path d="M21 3 3 10l7 3 3 7zM10 13l11-10" />,
+  heart: (
+    <path d="M12 20s-8-4.6-8-10.5A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 8 2.5C20 15.4 12 20 12 20z" />
   ),
 };
 
