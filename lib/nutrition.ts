@@ -22,14 +22,14 @@ export const NUTRITION_FIELDS: ReadonlyArray<{
     schemaUnit: "grams",
   },
   { key: "fatContent", label: "Chất béo", unit: "g", schemaUnit: "grams" },
+  { key: "fiberContent", label: "Chất xơ", unit: "g", schemaUnit: "grams" },
+  { key: "sugarContent", label: "Đường", unit: "g", schemaUnit: "grams" },
   {
     key: "calciumContent",
     label: "Canxi",
     unit: "mg",
     schemaUnit: "milligrams",
   },
-  { key: "fiberContent", label: "Chất xơ", unit: "g", schemaUnit: "grams" },
-  { key: "sugarContent", label: "Đường", unit: "g", schemaUnit: "grams" },
   {
     key: "sodiumContent",
     label: "Natri",
