@@ -55,7 +55,7 @@ function rateLimited(key: string) {
 }
 
 /* ---------- helpers ---------- */
-const oneLine = (s: string) => s.replace(/[\r\n\t]/g, " ").trim();
+const oneLine = (s: string) => s.replace(/[\r\n\t]+/g, " ").trim();
 const escapeHtml = (s: string) =>
   s
     .replace(/&/g, "&amp;")
@@ -69,6 +69,29 @@ function json(body: unknown, status = 200) {
     status,
     headers: { "Cache-Control": "no-store" },
   });
+}
+
+function smtpHint(e: {
+  code?: string;
+  responseCode?: number;
+  message?: string;
+}) {
+  const msg = e.message ?? "";
+  if (e.code === "EAUTH" || e.responseCode === 535)
+    return "Sai SMTP_USER/SMTP_PASS (Gmail cần App Password, không dùng mật khẩu thường).";
+  if (/wrong version number|ssl3_get_record|packet length/i.test(msg))
+    return "Sai SMTP_SECURE: port 587 dùng SMTP_SECURE=false, port 465 dùng true.";
+  if (
+    e.code === "ETIMEDOUT" ||
+    e.code === "ECONNECTION" ||
+    e.code === "ESOCKET"
+  )
+    return "Không kết nối được tới SMTP_HOST:SMTP_PORT (sai host/port hoặc nhà cung cấp hosting chặn cổng SMTP).";
+  if (e.code === "EDNS" || e.code === "ENOTFOUND")
+    return "SMTP_HOST không tồn tại, kiểm tra lại tên máy chủ.";
+  if (e.code === "EENVELOPE" || (e.responseCode && e.responseCode >= 550))
+    return "SMTP_FROM / CONTACT_TO_EMAIL bị từ chối (địa chỉ gửi phải được nhà cung cấp cho phép).";
+  return "Xem chi tiết trong log server.";
 }
 
 export async function POST(request: Request) {
@@ -186,13 +209,33 @@ export async function POST(request: Request) {
 
     return json({ ok: true });
   } catch (error) {
-    console.error("[contact] Failed to send mail:", error);
+    const e = error as {
+      code?: string;
+      command?: string;
+      responseCode?: number;
+      response?: string;
+      message?: string;
+    };
+    // Full details go to the server log only (never to visitors).
+    console.error("[contact] Failed to send mail", {
+      code: e.code,
+      command: e.command,
+      responseCode: e.responseCode,
+      response: e.response,
+      message: e.message,
+      smtp: `${config.host}:${config.port} secure=${config.secure} user=${config.user} from=${config.from}`,
+      hint: smtpHint(e),
+    });
     return json(
       {
         ok: false,
         errors: {
           form: "Không gửi được lời nhắn do lỗi hệ thống. Vui lòng thử lại sau.",
         },
+        // Only exposed outside production, to help while setting up.
+        ...(process.env.NODE_ENV !== "production"
+          ? { debug: `${e.code ?? "ERR"}: ${e.message ?? ""} — ${smtpHint(e)}` }
+          : {}),
       },
       502,
     );
