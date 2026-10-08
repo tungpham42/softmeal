@@ -243,6 +243,7 @@ const NON_SCHEMA_NUTRITION_KEYS = new Set([
   "potassiumContent",
   "ironContent",
   "zincContent",
+  "magnesiumContent",
 ]);
 
 function getNutritionSchema(recipe: SeoRecipe) {

@@ -18,12 +18,11 @@ export const NUTRITION_FIELDS: ReadonlyArray<{
   { key: "fatContent", label: "Chất béo", unit: "g", schemaUnit: "grams" },
   {
     key: "carbohydrateContent",
-    label: "Tinh bột (carb)",
+    label: "Carbohydrate",
     unit: "g",
     schemaUnit: "grams",
   },
   { key: "fiberContent", label: "Chất xơ", unit: "g", schemaUnit: "grams" },
-  { key: "sugarContent", label: "Đường", unit: "g", schemaUnit: "grams" },
   {
     key: "sodiumContent",
     label: "Natri",
@@ -51,6 +50,12 @@ export const NUTRITION_FIELDS: ReadonlyArray<{
   {
     key: "zincContent",
     label: "Kẽm",
+    unit: "mg",
+    schemaUnit: "milligrams",
+  },
+  {
+    key: "magnesiumContent",
+    label: "Magiê",
     unit: "mg",
     schemaUnit: "milligrams",
   },
