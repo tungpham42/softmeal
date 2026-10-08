@@ -14,14 +14,14 @@ export const NUTRITION_FIELDS: ReadonlyArray<{
     unit: "kcal",
     schemaUnit: "calories",
   },
-  { key: "proteinContent", label: "Đạm", unit: "g", schemaUnit: "grams" },
+  { key: "proteinContent", label: "Chất đạm", unit: "g", schemaUnit: "grams" },
+  { key: "fatContent", label: "Chất béo", unit: "g", schemaUnit: "grams" },
   {
     key: "carbohydrateContent",
     label: "Tinh bột (carb)",
     unit: "g",
     schemaUnit: "grams",
   },
-  { key: "fatContent", label: "Chất béo", unit: "g", schemaUnit: "grams" },
   { key: "fiberContent", label: "Chất xơ", unit: "g", schemaUnit: "grams" },
   { key: "sugarContent", label: "Đường", unit: "g", schemaUnit: "grams" },
   {

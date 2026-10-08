@@ -17,8 +17,8 @@ export type SortOption =
 export type RecipeNutrition = {
   calories?: string;
   proteinContent?: string;
-  carbohydrateContent?: string;
   fatContent?: string;
+  carbohydrateContent?: string;
   fiberContent?: string;
   sugarContent?: string;
   sodiumContent?: string;
