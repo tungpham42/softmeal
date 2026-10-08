@@ -10,6 +10,7 @@ import Icon from "@/components/ui/Icon";
 import { LoadingBlock } from "@/components/ui/Alert";
 import { getCategoryMeta } from "@/lib/seo";
 import { RECIPE_EXPLORER_RESET_EVENT } from "@/lib/recipeExplorerEvents";
+import { buildSearchIndex, scoreRecipe } from "@/lib/recipeSearch";
 
 const ITEMS_PER_PAGE = 12;
 const LOCATION_CHANGE_EVENT = "recipe-explorer-location-change";
@@ -105,31 +106,42 @@ export default function RecipeExplorer() {
     setCanonical(url);
   }, [category]);
 
+  const indexed = useMemo(
+    () =>
+      recipes.map((recipe) => ({
+        recipe,
+        index: buildSearchIndex(recipe.title, recipe.description ?? ""),
+      })),
+    [recipes],
+  );
+
   const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    const list = recipes.filter((recipe) => {
-      const matchesSearch =
-        !query ||
-        recipe.title.toLowerCase().includes(query) ||
-        recipe.description.toLowerCase().includes(query);
-      const matchesCategory = !category || recipe.category === category;
-      return matchesSearch && matchesCategory;
+    const hasQuery = search.trim().length > 0;
+
+    const matched = indexed
+      .filter(({ recipe }) => !category || recipe.category === category)
+      .map(({ recipe, index }) => ({
+        recipe,
+        score: hasQuery ? scoreRecipe(index, search) : 1,
+      }))
+      .filter((item) => item.score > 0);
+
+    const time = (r: Recipe) => new Date(r.createdAt ?? 0).getTime();
+
+    matched.sort((a, b) => {
+      // With a query and the default sort, best matches come first
+      if (hasQuery && sort === "alphabetAsc" && a.score !== b.score) {
+        return b.score - a.score;
+      }
+      if (sort === "alphabetDesc")
+        return b.recipe.title.localeCompare(a.recipe.title, "vi");
+      if (sort === "dateAsc") return time(a.recipe) - time(b.recipe);
+      if (sort === "dateDesc") return time(b.recipe) - time(a.recipe);
+      return a.recipe.title.localeCompare(b.recipe.title, "vi");
     });
-    return [...list].sort((a, b) => {
-      if (sort === "alphabetDesc") return b.title.localeCompare(a.title, "vi");
-      if (sort === "dateAsc")
-        return (
-          new Date(a.createdAt ?? 0).getTime() -
-          new Date(b.createdAt ?? 0).getTime()
-        );
-      if (sort === "dateDesc")
-        return (
-          new Date(b.createdAt ?? 0).getTime() -
-          new Date(a.createdAt ?? 0).getTime()
-        );
-      return a.title.localeCompare(b.title, "vi");
-    });
-  }, [recipes, search, category, sort]);
+
+    return matched.map((item) => item.recipe);
+  }, [indexed, search, category, sort]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const currentPage = Math.min(page, pageCount);
