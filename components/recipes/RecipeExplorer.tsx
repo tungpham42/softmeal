@@ -8,6 +8,7 @@ import RecipeCard from "@/components/recipes/RecipeCard";
 import Pagination from "@/components/ui/Pagination";
 import Icon from "@/components/ui/Icon";
 import { LoadingBlock } from "@/components/ui/Alert";
+import ThemedSelect from "@/components/ui/ThemedSelect";
 import { getCategoryMeta, SITE_NAME } from "@/lib/seo";
 import { RECIPE_EXPLORER_RESET_EVENT } from "@/lib/recipeExplorerEvents";
 import { buildSearchIndex, scoreRecipe } from "@/lib/recipeSearch";
@@ -233,37 +234,41 @@ export default function RecipeExplorer() {
           {!isMobile && searchInput}
           <label>
             <span className="sr-only">Danh mục</span>
-            <select
+            <ThemedSelect
+              name="category"
+              ariaLabel="Danh mục"
               value={category}
-              onChange={(e) => {
-                const value = e.target.value;
+              onChange={(value) => {
                 updateUrl(1, search, value, sort);
               }}
-              className="form-input"
-            >
-              <option value="">Tất cả danh mục</option>
-              {RECIPE_CATEGORIES.map((item) => (
-                <option key={item} value={item}>
-                  {categoryLabel(item)}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: "", label: "Tất cả danh mục" },
+                ...RECIPE_CATEGORIES.map((item) => ({
+                  value: item,
+                  label: categoryLabel(item),
+                })),
+              ]}
+              placeholder="Chọn danh mục"
+            />
           </label>
           <label>
             <span className="sr-only">Sắp xếp</span>
-            <select
+            <ThemedSelect
+              name="sortBy"
+              ariaLabel="Sắp xếp"
               value={sort}
-              onChange={(e) => {
-                const value = e.target.value as SortOption;
+              onChange={(v) => {
+                const value = v as SortOption;
                 updateUrl(1, search, category, value);
               }}
-              className="form-input"
-            >
-              <option value="alphabetAsc">Tên A → Z</option>
-              <option value="alphabetDesc">Tên Z → A</option>
-              <option value="dateDesc">Mới nhất</option>
-              <option value="dateAsc">Cũ nhất</option>
-            </select>
+              options={[
+                { value: "alphabetAsc", label: "Tên A → Z" },
+                { value: "alphabetDesc", label: "Tên Z → A" },
+                { value: "dateDesc", label: "Mới nhất" },
+                { value: "dateAsc", label: "Cũ nhất" },
+              ]}
+              placeholder="Chọn cách sắp xếp"
+            />
           </label>
         </div>
       </div>

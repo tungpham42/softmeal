@@ -14,6 +14,7 @@ import {
   validateName,
   type ContactErrors as Errors,
 } from "@/lib/contactValidation";
+import ThemedSelect from "@/components/ui/ThemedSelect";
 
 /* Public address the visitor's mail app will write to.
    NEXT_PUBLIC_ vars must be referenced statically so Next.js can inline them. */
@@ -241,18 +242,15 @@ export default function ContactForm() {
         <label htmlFor="contact-topic" className="form-label">
           <Icon name="tag" size={16} /> Chủ đề
         </label>
-        <select
+        <ThemedSelect
           id="contact-topic"
-          className="form-input"
+          name="topic"
+          ariaLabel="Chọn chủ đề"
           value={topic}
-          onChange={(e) => setTopic(e.target.value)}
-        >
-          {CONTACT_TOPICS.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
+          onChange={(value) => setTopic(value)}
+          options={[...CONTACT_TOPICS.map((t) => ({ value: t, label: t }))]}
+          placeholder="Chọn chủ đề"
+        />
       </div>
 
       <div>

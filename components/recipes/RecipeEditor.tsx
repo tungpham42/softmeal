@@ -17,6 +17,7 @@ import { categoryLabel, RECIPE_CATEGORIES } from "@/lib/category";
 import slugify from "@/lib/slug";
 import Icon from "@/components/ui/Icon";
 import Alert, { LoadingBlock } from "@/components/ui/Alert";
+import ThemedSelect from "@/components/ui/ThemedSelect";
 import RequireAuth from "@/components/auth/RequireAuth";
 import { extractYouTubeId, resolveYouTubeThumbnail } from "@/lib/youtube";
 import {
@@ -207,19 +208,19 @@ function EditorForm({
               <span className="form-label">
                 <Icon name="tag" size={15} /> Danh mục
               </span>
-              <select
+              <ThemedSelect
+                name="category"
+                ariaLabel="Danh mục"
                 value={category}
-                onChange={(e) =>
-                  setCategory(e.target.value as Recipe["category"])
-                }
-                className="form-input"
-              >
-                {RECIPE_CATEGORIES.map((item) => (
-                  <option key={item} value={item}>
-                    {categoryLabel(item)}
-                  </option>
-                ))}
-              </select>
+                onChange={(value) => setCategory(value as Recipe["category"])}
+                options={[
+                  ...RECIPE_CATEGORIES.map((item) => ({
+                    value: item,
+                    label: categoryLabel(item),
+                  })),
+                ]}
+                placeholder="Chọn danh mục"
+              />
             </label>
             <label className="block">
               <span className="form-label">

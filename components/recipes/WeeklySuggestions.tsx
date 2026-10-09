@@ -7,6 +7,7 @@ import type { Recipe } from "@/lib/types";
 import { categoryLabel } from "@/lib/category";
 import Icon from "@/components/ui/Icon";
 import { LoadingBlock } from "@/components/ui/Alert";
+import ThemedSelect from "@/components/ui/ThemedSelect";
 
 /* -------------------------------------------------------------------------- */
 /*  Types & constants                                                          */
@@ -435,6 +436,8 @@ function MealCard({
   const optionLabel = (r: Recipe) =>
     `${r.title} · ${categoryLabel(r.category)}`;
 
+  const shouldGroupSuggestions = suggested.length > 0 && others.length > 0;
+
   return (
     <div className="rounded-2xl border border-border/80 bg-cream/40 p-4">
       <div className="grid gap-3 lg:grid-cols-[0.8fr_1.5fr] lg:items-center">
@@ -446,38 +449,43 @@ function MealCard({
           <label className="sr-only" htmlFor={`${idPrefix}-select`}>
             Chọn món cho {slot.label.toLowerCase()}
           </label>
-          <select
+          <ThemedSelect
             id={`${idPrefix}-select`}
-            className="form-input min-w-0 flex-1"
             value={recipeId}
-            onChange={(e) => onChange(e.target.value)}
-          >
-            <option value="">Chưa chọn món</option>
-            {suggested.length > 0 && others.length > 0 ? (
-              <>
-                <optgroup label={`Gợi ý cho ${slot.label.toLowerCase()}`}>
-                  {suggested.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {optionLabel(r)}
-                    </option>
-                  ))}
-                </optgroup>
-                <optgroup label="Các món khác">
-                  {others.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {optionLabel(r)}
-                    </option>
-                  ))}
-                </optgroup>
-              </>
-            ) : (
-              recipes.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {optionLabel(r)}
-                </option>
-              ))
-            )}
-          </select>
+            onChange={onChange}
+            placeholder="Chưa chọn món"
+            options={
+              shouldGroupSuggestions
+                ? [{ value: "", label: "Chưa chọn món" }]
+                : [
+                    { value: "", label: "Chưa chọn món" },
+                    ...recipes.map((r) => ({
+                      value: String(r.id),
+                      label: optionLabel(r),
+                    })),
+                  ]
+            }
+            groups={
+              shouldGroupSuggestions
+                ? [
+                    {
+                      label: `Gợi ý cho ${slot.label.toLowerCase()}`,
+                      options: suggested.map((r) => ({
+                        value: String(r.id),
+                        label: optionLabel(r),
+                      })),
+                    },
+                    {
+                      label: "Các món khác",
+                      options: others.map((r) => ({
+                        value: String(r.id),
+                        label: optionLabel(r),
+                      })),
+                    },
+                  ]
+                : undefined
+            }
+          />
           <div className="flex shrink-0 gap-2">
             <button
               type="button"
@@ -1253,23 +1261,22 @@ export default function WeeklySuggestions() {
               <label className="sr-only" htmlFor="shopping-scope">
                 Phạm vi danh sách
               </label>
-              <select
+              <ThemedSelect
                 id="shopping-scope"
-                className="form-input w-auto"
+                name="sortBy"
+                ariaLabel="Sắp xếp"
                 value={String(shoppingScope)}
-                onChange={(e) =>
-                  setShoppingScope(
-                    e.target.value === "week" ? "week" : Number(e.target.value),
-                  )
+                onChange={(value) =>
+                  setShoppingScope(value === "week" ? "week" : Number(value))
                 }
-              >
-                <option value="week">Cả tuần</option>
-                {DAYS.map((d, i) => (
-                  <option key={d} value={i}>
-                    {i === todayIndex ? `${d} (hôm nay)` : d}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: "week", label: "Cả tuần" },
+                  ...DAYS.map((d, i) => ({
+                    value: String(i),
+                    label: i === todayIndex ? `${d} (hôm nay)` : d,
+                  })),
+                ]}
+              />
               <button
                 type="button"
                 onClick={copyShoppingList}

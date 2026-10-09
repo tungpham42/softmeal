@@ -1,0 +1,165 @@
+/* Món Ăn custom dropdowns — cream paper, lacquer red, turmeric gold, bamboo green. */
+.themed-select {
+  --ts-paper: var(--color-cream, #fffaf1);
+  --ts-paper-raised: var(--color-card, #fffdf8);
+  --ts-ink: var(--color-ink, #382b22);
+  --ts-muted: var(--color-muted, #86776b);
+  --ts-border: var(--color-border, #e7d9c5);
+  --ts-lacquer: var(--color-lacquer, #a33d2e);
+  --ts-lacquer-soft: var(--color-lacquer-soft, #fbefeb);
+  --ts-gold: var(--color-turmeric, #c18b36);
+  --ts-green: var(--color-bamboo, #456b4a);
+  --ts-green-soft: #edf4eb;
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.45rem;
+  color: var(--ts-ink);
+  font-family: inherit;
+}
+
+.themed-select *,
+.themed-select *::before,
+.themed-select *::after { box-sizing: border-box; }
+
+.themed-select__label {
+  display: block;
+  color: var(--ts-ink);
+  font-size: 0.875rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.themed-select__required { color: var(--ts-lacquer); }
+
+.themed-select__trigger {
+  display: flex;
+  width: 100%;
+  min-height: 2.875rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--ts-border);
+  border-radius: 0.8rem;
+  background: var(--ts-paper-raised);
+  color: var(--ts-ink);
+  box-shadow: 0 1px 2px rgb(63 40 24 / 3%);
+  font: inherit;
+  font-size: 0.925rem;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.themed-select__trigger:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--ts-gold) 70%, var(--ts-border));
+  background: var(--ts-paper);
+}
+
+.themed-select__trigger:focus-visible,
+.themed-select__trigger.is-open {
+  outline: none;
+  border-color: var(--ts-lacquer);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ts-lacquer) 15%, transparent), 0 2px 6px rgb(63 40 24 / 4%);
+}
+
+.themed-select__trigger.has-error { border-color: var(--ts-lacquer); }
+.themed-select__trigger:disabled { cursor: not-allowed; opacity: 0.55; background: #f3eee6; }
+.themed-select__value { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.themed-select__value.is-placeholder { color: var(--ts-muted); }
+
+.themed-select__chevron {
+  width: 1.2rem;
+  height: 1.2rem;
+  flex: 0 0 auto;
+  color: var(--ts-muted);
+  transition: transform 180ms ease, color 180ms ease;
+}
+.themed-select__chevron.is-open { transform: rotate(180deg); color: var(--ts-lacquer); }
+
+.themed-select__popup {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  left: 0;
+  overflow: hidden;
+  border: 1px solid var(--ts-border);
+  border-radius: 0.9rem;
+  background: var(--ts-paper-raised);
+  box-shadow: 0 16px 36px rgb(58 38 25 / 15%), 0 3px 8px rgb(58 38 25 / 6%);
+  animation: themed-select-enter 140ms ease-out;
+}
+
+.themed-select__search-wrap { position: relative; padding: 0.65rem; border-bottom: 1px solid var(--ts-border); background: var(--ts-paper); }
+.themed-select__search-icon { position: absolute; top: 50%; left: 1.15rem; width: 1.05rem; height: 1.05rem; transform: translateY(-50%); color: var(--ts-muted); pointer-events: none; }
+.themed-select__search {
+  display: block;
+  width: 100%;
+  min-height: 2.45rem;
+  padding: 0.55rem 0.7rem 0.55rem 2.2rem;
+  border: 1px solid var(--ts-border);
+  border-radius: 0.65rem;
+  outline: none;
+  background: var(--ts-paper-raised);
+  color: var(--ts-ink);
+  font: inherit;
+  font-size: 0.875rem;
+}
+.themed-select__search:focus { border-color: var(--ts-gold); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ts-gold) 18%, transparent); }
+.themed-select__search::placeholder { color: var(--ts-muted); }
+.themed-select__search::-webkit-search-cancel-button { cursor: pointer; }
+
+.themed-select__options { max-height: min(18rem, 44vh); overflow-y: auto; padding: 0.35rem; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--ts-border) transparent; }
+.themed-select__option {
+  display: flex;
+  width: 100%;
+  min-height: 2.6rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.7rem;
+  border: 1px solid transparent;
+  border-radius: 0.6rem;
+  background: transparent;
+  color: var(--ts-ink);
+  font: inherit;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.themed-select__option:hover:not(:disabled),
+.themed-select__option.is-active:not(:disabled) { background: var(--ts-green-soft); color: var(--ts-green); }
+.themed-select__option.is-selected { background: var(--ts-lacquer-soft); color: var(--ts-lacquer); font-weight: 650; }
+.themed-select__option.is-selected.is-active { border-color: color-mix(in srgb, var(--ts-lacquer) 18%, transparent); }
+.themed-select__option:focus-visible { outline: 2px solid var(--ts-lacquer); outline-offset: -2px; }
+.themed-select__option:disabled { cursor: not-allowed; opacity: 0.45; }
+.themed-select__option-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 0.12rem; }
+.themed-select__option-label { overflow-wrap: anywhere; }
+.themed-select__option-description { color: var(--ts-muted); font-size: 0.775rem; font-weight: 400; }
+.themed-select__check { width: 1.05rem; height: 1.05rem; flex: 0 0 auto; color: var(--ts-lacquer); }
+.themed-select__check-spacer { width: 1.05rem; height: 1.05rem; flex: 0 0 auto; }
+.themed-select__empty { margin: 0; padding: 1.2rem 0.8rem; color: var(--ts-muted); font-size: 0.875rem; text-align: center; }
+.themed-select__message { margin: 0; color: var(--ts-muted); font-size: 0.78rem; line-height: 1.4; }
+.themed-select__message.is-error { color: var(--ts-lacquer); }
+
+@keyframes themed-select-enter {
+  from { opacity: 0; transform: translateY(-4px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 640px) {
+  .themed-select__trigger { min-height: 2.75rem; }
+  .themed-select__options { max-height: min(15rem, 38vh); }
+  .themed-select__popup { border-radius: 0.8rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .themed-select *, .themed-select__popup { animation: none !important; transition: none !important; }
+}

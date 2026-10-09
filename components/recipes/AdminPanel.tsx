@@ -8,6 +8,7 @@ import RecipeCard from "@/components/recipes/RecipeCard";
 import Alert, { LoadingBlock } from "@/components/ui/Alert";
 import Icon from "@/components/ui/Icon";
 import Pagination from "@/components/ui/Pagination";
+import ThemedSelect from "@/components/ui/ThemedSelect";
 import {
   deleteComment,
   deleteRecipe,
@@ -630,34 +631,39 @@ function RecipesSection({
 
           <label>
             <span className="form-label">Danh mục</span>
-            <select
+            <ThemedSelect
+              name="category"
+              ariaLabel="Danh mục"
               value={recipeCategory}
-              onChange={(event) => onCategory(event.target.value)}
-              className="form-input"
-            >
-              <option value="all">Tất cả danh mục</option>
-              {RECIPE_CATEGORIES.map((category) => (
-                <option key={category} value={category}>
-                  {categoryLabel(category)}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => onCategory(value)}
+              options={[
+                { value: "all", label: "Tất cả danh mục" },
+                ...RECIPE_CATEGORIES.map((category) => ({
+                  value: category,
+                  label: categoryLabel(category),
+                })),
+              ]}
+              placeholder="Chọn danh mục"
+            />
           </label>
 
           <label>
             <span className="form-label">Sắp xếp</span>
-            <select
+            <ThemedSelect
+              name="sortBy"
+              ariaLabel="Sắp xếp"
               value={recipeSort}
-              onChange={(event) => onSort(event.target.value as RecipeSort)}
-              className="form-input"
-            >
-              <option value="dateDesc">Mới nhất</option>
-              <option value="dateAsc">Cũ nhất</option>
-              <option value="alphabetAsc">Tên A → Z</option>
-              <option value="alphabetDesc">Tên Z → A</option>
-              <option value="commentsDesc">Nhiều bình luận nhất</option>
-              <option value="commentsAsc">Ít bình luận nhất</option>
-            </select>
+              onChange={(value) => onSort(value as RecipeSort)}
+              options={[
+                { value: "newest", label: "Mới nhất" },
+                { value: "oldest", label: "Cũ nhất" },
+                { value: "alphabetAsc", label: "Tên A → Z" },
+                { value: "alphabetDesc", label: "Tên Z → A" },
+                { value: "commentsDesc", label: "Nhiều bình luận nhất" },
+                { value: "commentsAsc", label: "Ít bình luận nhất" },
+              ]}
+              placeholder="Chọn cách sắp xếp"
+            />
           </label>
         </div>
 
@@ -861,35 +867,40 @@ function CommentsSection({
 
           <label>
             <span className="form-label">Công thức</span>
-            <select
+            <ThemedSelect
+              name="recipeId"
+              ariaLabel="Công thức"
               value={recipeId}
-              onChange={(event) => onRecipe(event.target.value)}
-              className="form-input"
-            >
-              <option value="all">Tất cả công thức</option>
-              {recipes
-                .filter((recipe) => recipe.comments.length > 0)
-                .sort((a, b) => a.title.localeCompare(b.title, "vi"))
-                .map((recipe) => (
-                  <option key={recipe.id} value={recipe.id}>
-                    {recipe.title}
-                  </option>
-                ))}
-            </select>
+              onChange={onRecipe}
+              options={[
+                { value: "all", label: "Tất cả công thức" },
+                ...recipes
+                  .filter((recipe) => recipe.comments.length > 0)
+                  .sort((a, b) => a.title.localeCompare(b.title, "vi"))
+                  .map((recipe) => ({
+                    value: recipe.id,
+                    label: recipe.title,
+                  })),
+              ]}
+              placeholder="Chọn cách sắp xếp"
+            />
           </label>
 
           <label>
             <span className="form-label">Sắp xếp</span>
-            <select
+            <ThemedSelect
+              name="sortBy"
+              ariaLabel="Sắp xếp"
               value={sort}
-              onChange={(event) => onSort(event.target.value as CommentSort)}
-              className="form-input"
-            >
-              <option value="dateDesc">Mới nhất</option>
-              <option value="dateAsc">Cũ nhất</option>
-              <option value="userAsc">Tên người dùng A → Z</option>
-              <option value="recipeAsc">Tên công thức A → Z</option>
-            </select>
+              onChange={(value) => onSort(value as CommentSort)}
+              options={[
+                { value: "newest", label: "Mới nhất" },
+                { value: "oldest", label: "Cũ nhất" },
+                { value: "userAsc", label: "Tên người dùng A → Z" },
+                { value: "recipeAsc", label: "Tên công thức A → Z" },
+              ]}
+              placeholder="Chọn cách sắp xếp"
+            />
           </label>
         </div>
 

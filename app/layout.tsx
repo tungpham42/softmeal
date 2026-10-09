@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import Script from "next/script";
 import { GoogleAnalytics, GoogleTagManager } from "@next/third-parties/google";
 import "./globals.css";
+import "@/styles/themed-select.css";
 import Header from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
 import BackToTop from "@/components/site/BackToTop";

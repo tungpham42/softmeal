@@ -20,6 +20,7 @@ import RequireAuth from "@/components/auth/RequireAuth";
 import RecipeCard from "@/components/recipes/RecipeCard";
 import Icon from "@/components/ui/Icon";
 import Alert, { LoadingBlock } from "@/components/ui/Alert";
+import ThemedSelect from "@/components/ui/ThemedSelect";
 
 const DEFAULT_SORT: SortOption = "alphabetAsc";
 const sortListeners = new Set<() => void>();
@@ -237,18 +238,19 @@ function ProfileInner() {
                 {recipes.length} công thức đã chia sẻ
               </p>
             </div>
-            <select
+            <ThemedSelect
+              name="sortBy"
+              ariaLabel="Sắp xếp"
               value={sort}
-              onChange={(e) =>
-                setProfileSortOption(e.target.value as SortOption)
-              }
-              className="form-input sm:w-52"
-            >
-              <option value="alphabetAsc">Tên A → Z</option>
-              <option value="alphabetDesc">Tên Z → A</option>
-              <option value="dateDesc">Mới nhất</option>
-              <option value="dateAsc">Cũ nhất</option>
-            </select>
+              onChange={(value) => setProfileSortOption(value as SortOption)}
+              options={[
+                { value: "alphabetAsc", label: "Tên A → Z" },
+                { value: "alphabetDesc", label: "Tên Z → A" },
+                { value: "dateDesc", label: "Mới nhất" },
+                { value: "dateAsc", label: "Cũ nhất" },
+              ]}
+              placeholder="Chọn cách sắp xếp"
+            />
           </div>
           {loading ? (
             <LoadingBlock />
