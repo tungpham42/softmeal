@@ -1,6 +1,6 @@
 import { categoryLabel, isRecipeCategory } from "@/lib/category";
 
-export const SITE_NAME = "Bếp nhà Quỳnh";
+export const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME || "Bếp nhà Quỳnh";
 export const SITE_URL = "https://monan.io.vn";
 export const DEFAULT_TITLE = `${SITE_NAME} — Món ăn & ký ức`;
 export const DEFAULT_DESCRIPTION =

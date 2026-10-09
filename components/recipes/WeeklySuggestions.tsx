@@ -937,7 +937,7 @@ export default function WeeklySuggestions() {
       <header className="hero-paper relative overflow-hidden rounded-[2rem] px-6 py-7 text-ivory shadow-[0_22px_65px_rgba(125,36,24,0.16)] sm:px-9 sm:py-9">
         <div className="absolute -right-12 -top-16 size-56 rounded-full border border-gold/20 bg-gold/5" />
         <div className="relative">
-          <span className="eyebrow text-gold-light">
+          <span className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-ivory/10 px-3 py-1 text-xs font-extrabold uppercase tracking-[0.15em] text-gold-light">
             <Icon name="calendar" size={15} /> Kế hoạch bếp nhà ·{" "}
             {DAYS[todayIndex]}, {weekDates[todayIndex]}
           </span>
