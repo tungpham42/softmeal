@@ -34,6 +34,7 @@ export type IconName =
   | "pinterest"
   | "linkedin"
   | "check"
+  | "copy"
   | "menu"
   | "close"
   | "phone"
@@ -201,6 +202,12 @@ const paths: Record<IconName, ReactNode> = {
     <path d="M5 7H2v14h3V7zm0-4H2v3h3V3zM10 7H7v14h3v-7c0-2 1-4 3.5-4s3.5 2 3.5 4v7h3v-8c0-4-2-6-5.5-6-2 0-3.5 1.1-4 2.2z" />
   ),
   check: <path d="m5 12 4 4L19 6" />,
+  copy: (
+    <>
+      <rect x="9" y="9" width="12" height="12" rx="2" />
+      <path d="M5 15a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2" />
+    </>
+  ),
   menu: (
     <>
       <path d="M4 6h16M4 12h16M4 18h16" />
