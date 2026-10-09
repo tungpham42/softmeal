@@ -1281,7 +1281,7 @@ export default function WeeklySuggestions() {
                 type="button"
                 onClick={copyShoppingList}
                 disabled={toBuy.length === 0}
-                className="btn-primary inline-flex items-center w-100"
+                className="btn-primary inline-flex items-center"
                 aria-label="Sao chép phần cần mua"
                 title="Sao chép phần cần mua"
               >
