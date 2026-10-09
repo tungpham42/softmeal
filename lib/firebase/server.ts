@@ -11,36 +11,48 @@ function getFirebaseAdminApp() {
     return apps[0];
   }
 
-  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(
-    /\\n/g,
-    "\n",
-  );
+  const encoded = process.env.FIREBASE_SERVICE_ACCOUNT_B64;
 
-  if (!projectId || !clientEmail || !privateKey) {
+  if (!encoded) {
+    throw new Error("Missing FIREBASE_SERVICE_ACCOUNT_B64.");
+  }
+
+  let serviceAccount: {
+    project_id: string;
+    client_email: string;
+    private_key: string;
+  };
+
+  try {
+    serviceAccount = JSON.parse(
+      Buffer.from(encoded, "base64").toString("utf8"),
+    );
+  } catch {
     throw new Error(
-      "Missing Firebase Admin credentials. Set FIREBASE_ADMIN_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL and FIREBASE_ADMIN_PRIVATE_KEY.",
+      "FIREBASE_SERVICE_ACCOUNT_B64 is not valid base64-encoded JSON.",
     );
   }
 
   return initializeApp({
     credential: cert({
-      projectId,
-      clientEmail,
-      privateKey,
+      projectId: serviceAccount.project_id,
+      clientEmail: serviceAccount.client_email,
+      privateKey: serviceAccount.private_key,
     }),
   });
 }
 
-const db = getFirestore(getFirebaseAdminApp());
+// Lazy init: avoids failing at import time (e.g. during `next build`)
+function getDb() {
+  return getFirestore(getFirebaseAdminApp());
+}
 
 /**
  * Server-only recipe lookup used by Next.js generateMetadata().
  * Keep this file free of `use client` and browser-only Firebase APIs.
  */
 export async function fetchRecipesServer(): Promise<Recipe[]> {
-  const snapshot = await db.collection("recipes").get();
+  const snapshot = await getDb().collection("recipes").get();
   return snapshot.docs.map((doc) => {
     const data = doc.data();
     return {
@@ -53,7 +65,7 @@ export async function fetchRecipesServer(): Promise<Recipe[]> {
 export async function fetchRecipeBySlugServer(
   slug: string,
 ): Promise<Recipe | null> {
-  const snapshot = await db
+  const snapshot = await getDb()
     .collection("recipes")
     .where("slug", "==", slug)
     .limit(1)
