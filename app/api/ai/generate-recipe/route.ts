@@ -131,24 +131,269 @@ async function getVideoMetadata(
   }
 }
 
-async function getTranscript(
+type TranscriptResult = { text: string; language: string };
+
+type YouTubeCaptionTrack = {
+  baseUrl?: unknown;
+  languageCode?: unknown;
+  kind?: unknown;
+};
+
+const YOUTUBE_PLAYER_ENDPOINT =
+  "https://www.youtube.com/youtubei/v1/player?prettyPrint=false";
+
+/** Decode caption text without bringing an XML parser into the client bundle. */
+function decodeCaptionEntities(value: string): string {
+  return value
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&#x([\da-f]+);/gi, (_, hex: string) => {
+      const point = Number.parseInt(hex, 16);
+      return Number.isFinite(point) ? String.fromCodePoint(point) : "";
+    })
+    .replace(/&#(\d+);/g, (_, decimal: string) => {
+      const point = Number.parseInt(decimal, 10);
+      return Number.isFinite(point) ? String.fromCodePoint(point) : "";
+    });
+}
+
+function parseCaptionPayload(payload: string): string {
+  const trimmed = payload.trim();
+  if (!trimmed) return "";
+
+  // YouTube's json3 caption format.
+  if (trimmed.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(trimmed) as {
+        events?: Array<{ segs?: Array<{ utf8?: unknown }> }>;
+      };
+      return (parsed.events ?? [])
+        .flatMap((event) => event.segs ?? [])
+        .map((segment) =>
+          typeof segment.utf8 === "string" ? segment.utf8 : "",
+        )
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim();
+    } catch {
+      // Continue with XML parsers below.
+    }
+  }
+
+  // Newer srv3 XML format: <p><s>word</s>...</p>.
+  const srv3Pieces: string[] = [];
+  const paragraphPattern = /<p\b[^>]*>([\s\S]*?)<\/p>/gi;
+  let paragraphMatch: RegExpExecArray | null;
+  while ((paragraphMatch = paragraphPattern.exec(trimmed)) !== null) {
+    const piece = decodeCaptionEntities(
+      paragraphMatch[1].replace(/<[^>]*>/g, " "),
+    )
+      .replace(/\s+/g, " ")
+      .trim();
+    if (piece) srv3Pieces.push(piece);
+  }
+  if (srv3Pieces.length) return srv3Pieces.join(" ").trim();
+
+  // Classic XML format: <text start="...">...</text>.
+  const classicPieces: string[] = [];
+  const textPattern = /<text\b[^>]*>([\s\S]*?)<\/text>/gi;
+  let textMatch: RegExpExecArray | null;
+  while ((textMatch = textPattern.exec(trimmed)) !== null) {
+    const piece = decodeCaptionEntities(textMatch[1].replace(/<[^>]*>/g, " "))
+      .replace(/\s+/g, " ")
+      .trim();
+    if (piece) classicPieces.push(piece);
+  }
+  return classicPieces.join(" ").trim();
+}
+
+async function fetchCaptionTrack(
+  track: YouTubeCaptionTrack,
+): Promise<TranscriptResult | null> {
+  if (typeof track.baseUrl !== "string") return null;
+
+  let captionUrl: URL;
+  try {
+    captionUrl = new URL(track.baseUrl);
+  } catch {
+    return null;
+  }
+
+  // Only request captions from YouTube itself; do not follow arbitrary remote URLs.
+  if (
+    captionUrl.protocol !== "https:" ||
+    !(
+      captionUrl.hostname === "youtube.com" ||
+      captionUrl.hostname.endsWith(".youtube.com")
+    )
+  ) {
+    return null;
+  }
+
+  const language =
+    typeof track.languageCode === "string" ? track.languageCode : "unknown";
+  const candidates = [captionUrl, new URL(captionUrl.toString())];
+  // Some caption endpoints serve the machine-readable json3 format more reliably.
+  candidates[1].searchParams.set("fmt", "json3");
+
+  for (const candidate of candidates) {
+    try {
+      const response = await fetch(candidate, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (compatible; SOFTMEAL recipe assistant/1.0)",
+        },
+        signal: AbortSignal.timeout(6_000),
+      });
+      if (!response.ok) continue;
+      const payload = (await response.text()).slice(0, 2_000_000);
+      const text = parseCaptionPayload(payload)
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, MAX_TRANSCRIPT_CHARS);
+      if (text) return { text, language };
+    } catch {
+      // Try the next caption representation.
+    }
+  }
+
+  return null;
+}
+
+async function fetchTranscriptViaPlayerClients(
   videoId: string,
-): Promise<{ text: string; language: string }> {
-  const segments = await fetchTranscript(videoId, {
-    fetch: (input, init) =>
-      fetch(input, { ...init, signal: AbortSignal.timeout(15_000) }),
-  });
-  const text = segments
-    .map((segment) => segment.text)
-    .join(" ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, MAX_TRANSCRIPT_CHARS);
-  if (!text) throw new Error("empty_transcript");
-  return {
-    text,
-    language: segments.find((segment) => segment.lang)?.lang ?? "unknown",
-  };
+): Promise<TranscriptResult> {
+  // Different official YouTube player clients expose different caption tracks.
+  // These are fallbacks only; YouTube may still withhold captions or block requests.
+  const clients = [
+    {
+      name: "WEB",
+      version: "2.20260930.01.00",
+      userAgent:
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+    },
+    {
+      name: "IOS",
+      version: "20.10.4",
+      userAgent:
+        "com.google.ios.youtube/20.10.4 (iPhone16,2; U; CPU iOS 18_0 like Mac OS X)",
+    },
+    {
+      name: "TVHTML5",
+      version: "7.20250924.18.00",
+      userAgent:
+        "Mozilla/5.0 (SMART-TV; Linux; Tizen 8.0) AppleWebKit/537.36 (KHTML, like Gecko) 85.0.4183.93 TV Safari/537.36",
+    },
+  ];
+
+  const trackGroups = await Promise.all(
+    clients.map(async (client) => {
+      try {
+        const response = await fetch(YOUTUBE_PLAYER_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "User-Agent": client.userAgent,
+          },
+          body: JSON.stringify({
+            videoId,
+            context: {
+              client: {
+                clientName: client.name,
+                clientVersion: client.version,
+                hl: "vi",
+                gl: "VN",
+              },
+            },
+          }),
+          signal: AbortSignal.timeout(7_000),
+        });
+        if (!response.ok) return [] as YouTubeCaptionTrack[];
+
+        const player = (await response.json()) as {
+          captions?: {
+            playerCaptionsTracklistRenderer?: {
+              captionTracks?: YouTubeCaptionTrack[];
+            };
+          };
+        };
+        return (
+          player.captions?.playerCaptionsTracklistRenderer?.captionTracks ?? []
+        );
+      } catch {
+        return [] as YouTubeCaptionTrack[];
+      }
+    }),
+  );
+
+  const rankedTracks = trackGroups
+    .flat()
+    .filter(
+      (track) =>
+        typeof track.baseUrl === "string" &&
+        typeof track.languageCode === "string",
+    )
+    .sort((left, right) => {
+      const rank = (track: YouTubeCaptionTrack) => {
+        const language = String(track.languageCode).toLowerCase();
+        if (language.startsWith("vi")) return 0;
+        if (language.startsWith("en")) return 1;
+        return 2;
+      };
+      return rank(left) - rank(right);
+    });
+
+  // Different clients can expose duplicate tracks. Try up to four distinct tracks
+  // in parallel so one stale/broken track doesn't hide another usable one.
+  const seenTracks = new Set<string>();
+  const candidates = rankedTracks
+    .filter((track) => {
+      const url = String(track.baseUrl);
+      if (seenTracks.has(url)) return false;
+      seenTracks.add(url);
+      return true;
+    })
+    .slice(0, 4);
+
+  const transcripts = await Promise.all(
+    candidates.map((track) => fetchCaptionTrack(track)),
+  );
+  const transcript = transcripts.find((item): item is TranscriptResult =>
+    Boolean(item?.text),
+  );
+  if (transcript) return transcript;
+
+  throw new Error("youtube_captions_unavailable");
+}
+
+async function getTranscript(videoId: string): Promise<TranscriptResult> {
+  // First try the maintained transcript package; it covers the standard Android + web flows.
+  try {
+    const segments = await fetchTranscript(videoId, {
+      fetch: (input, init) =>
+        fetch(input, { ...init, signal: AbortSignal.timeout(7_000) }),
+    });
+    const text = segments
+      .map((segment) => segment.text)
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, MAX_TRANSCRIPT_CHARS);
+    if (text) {
+      return {
+        text,
+        language: segments.find((segment) => segment.lang)?.lang ?? "unknown",
+      };
+    }
+  } catch {
+    // The package uses an unofficial YouTube endpoint and can fail for some videos.
+  }
+
+  // Try several additional public player clients before asking the user for a transcript.
+  return fetchTranscriptViaPlayerClients(videoId);
 }
 
 export async function POST(request: NextRequest) {
@@ -159,12 +404,6 @@ export async function POST(request: NextRequest) {
   }
 
   const clientId = getClientIdentifier(request);
-  if (!consumeGenerationLimit(clientId)) {
-    return jsonError(
-      "Bạn đã dùng hết lượt tạo công thức tạm thời. Vui lòng thử lại sau một giờ.",
-      429,
-    );
-  }
 
   let body: unknown;
   try {
@@ -208,7 +447,7 @@ export async function POST(request: NextRequest) {
       transcriptLanguage = transcript.language;
     } catch {
       return jsonError(
-        "Không lấy được phụ đề của video này (video có thể tắt phụ đề hoặc YouTube chặn yêu cầu từ máy chủ). Hãy dán lời thoại/phụ đề vào ô ghi chú bên dưới link YouTube rồi thử lại.",
+        "Đã thử nhiều cách lấy phụ đề nhưng YouTube vẫn không cung cấp transcript cho video này. Video có thể không có phụ đề công khai hoặc YouTube đang chặn yêu cầu từ máy chủ. Hãy bật phụ đề công khai hoặc dán lời thoại vào ô ghi chú; hệ thống không tự bịa nội dung video.",
         422,
       );
     }
@@ -238,6 +477,15 @@ export async function POST(request: NextRequest) {
     transcriptText,
     "</transcript>",
   ].join("\n");
+
+  // Only count an attempt after input validation and transcript extraction succeed.
+  // Failed YouTube-caption requests should not exhaust the user's generation quota.
+  if (!consumeGenerationLimit(clientId)) {
+    return jsonError(
+      "Bạn đã dùng hết lượt tạo công thức AI trong một giờ. Vui lòng thử lại khi hết thời gian giới hạn.",
+      429,
+    );
+  }
 
   let groqResponse: Response;
   try {
