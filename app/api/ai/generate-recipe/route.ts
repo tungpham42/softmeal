@@ -291,13 +291,16 @@ function ytFetch(input: RequestInfo | URL, init: RequestInit = {}) {
 
 const MIN_DESCRIPTION_CHARS = 200;
 
-async function getVideoDescription(videoId: string): Promise<string | null> {
+type DescriptionResult = { text: string | null; reason: string };
+
+/** Fetches the video description through the official YouTube Data API v3. */
+async function getVideoDescription(
+  videoId: string,
+): Promise<DescriptionResult> {
   const apiKey = process.env.YOUTUBE_API_KEY?.trim();
   if (!apiKey) {
-    console.error(
-      "[video-recipe] YOUTUBE_API_KEY is not set; description fallback skipped",
-    );
-    return null;
+    console.error("[video-recipe] YOUTUBE_API_KEY is not set");
+    return { text: null, reason: "api_key_missing" };
   }
   try {
     const url = new URL("https://www.googleapis.com/youtube/v3/videos");
@@ -306,26 +309,43 @@ async function getVideoDescription(videoId: string): Promise<string | null> {
     url.searchParams.set("key", apiKey);
     const response = await fetch(url, { signal: AbortSignal.timeout(7_000) });
     if (!response.ok) {
-      console.error(
-        `[video-recipe] YouTube Data API failed: HTTP ${response.status}`,
-      );
-      return null;
+      let googleReason = "";
+      try {
+        const body = (await response.json()) as {
+          error?: { errors?: Array<{ reason?: unknown }> };
+        };
+        const reason = body.error?.errors?.[0]?.reason;
+        if (typeof reason === "string") googleReason = `:${reason}`;
+      } catch {
+        // Ignore unreadable error bodies.
+      }
+      const reason = `api_http_${response.status}${googleReason}`;
+      console.error(`[video-recipe] YouTube Data API failed: ${reason}`);
+      return { text: null, reason };
     }
     const data = (await response.json()) as {
       items?: Array<{ snippet?: { description?: unknown } }>;
     };
     const description = data.items?.[0]?.snippet?.description;
-    if (typeof description !== "string") return null;
+    if (typeof description !== "string") {
+      return { text: null, reason: "video_not_found_or_private" };
+    }
     const text = description
       .replace(/https?:\/\/\S+/g, "")
       .replace(/[ \t]+/g, " ")
       .replace(/\n{3,}/g, "\n\n")
       .trim()
       .slice(0, MAX_TRANSCRIPT_CHARS);
-    return text.length >= MIN_DESCRIPTION_CHARS ? text : null;
+    if (text.length < MIN_DESCRIPTION_CHARS) {
+      return {
+        text: null,
+        reason: `description_too_short_${text.length}_chars`,
+      };
+    }
+    return { text, reason: "ok" };
   } catch (error) {
     console.error("[video-recipe] YouTube Data API error:", error);
-    return null;
+    return { text: null, reason: "api_network_error" };
   }
 }
 
@@ -691,14 +711,22 @@ export async function POST(request: NextRequest) {
       console.error("[video-recipe] all transcript methods failed:", error);
       // Fallback: the video description via the official YouTube Data API.
       const description = await getVideoDescription(videoId);
-      if (description) {
-        transcriptText = description;
+      if (description.text) {
+        transcriptText = description.text;
         transcriptLanguage = "mô tả video";
         sourceKind = "description";
       } else {
-        return jsonError(
-          "Không lấy được phụ đề của video này (YouTube có thể đang chặn máy chủ, hoặc video không có phụ đề công khai) và phần mô tả video cũng không đủ nội dung để tạo công thức. Hãy dán lời thoại hoặc công thức từ mô tả video vào ô ghi chú; hệ thống không tự bịa nội dung video.",
-          422,
+        console.error(
+          "[video-recipe] description fallback unavailable:",
+          description.reason,
+        );
+        return NextResponse.json(
+          {
+            error: `Không lấy được phụ đề của video này (YouTube có thể đang chặn máy chủ, hoặc video không có phụ đề công khai) và phần mô tả video cũng không dùng được (${description.reason}). Hãy dán lời thoại hoặc công thức từ mô tả video vào ô ghi chú; hệ thống không tự bịa nội dung video.`,
+            code: "captions_unavailable",
+            reason: description.reason,
+          },
+          { status: 422 },
         );
       }
     }
