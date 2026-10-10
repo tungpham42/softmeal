@@ -8,7 +8,7 @@ export const maxDuration = 60;
 const MODEL = "openai/gpt-oss-120b";
 const MAX_TRANSCRIPT_CHARS = 40_000;
 const MAX_SUPPLIED_TRANSCRIPT_CHARS = 60_000;
-const MAX_GENERATIONS_PER_HOUR = 0;
+const MAX_GENERATIONS_PER_HOUR = 30;
 
 // Best-effort process-local rate limit keyed by the client IP instead of Firebase identity.
 // For production/serverless, enforce limits at the hosting provider or a shared rate-limit store.
