@@ -5,7 +5,8 @@ import { extractYouTubeId } from "@/lib/youtube";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const MODEL = "openai/gpt-oss-120b";
+const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+const MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free";
 const MAX_TRANSCRIPT_CHARS = 40_000;
 const MAX_SUPPLIED_TRANSCRIPT_CHARS = 60_000;
 const MAX_GENERATIONS_PER_HOUR = 0;
@@ -91,31 +92,31 @@ const topicSchema = {
   required: ["isCulinary", "detectedTopic"],
 } as const;
 
-type GroqFailureKind = "network" | "rate_limit" | "upstream" | "invalid_output";
+type AiFailureKind = "network" | "rate_limit" | "upstream" | "invalid_output";
 
-class GroqError extends Error {
-  constructor(public readonly kind: GroqFailureKind) {
+class AiError extends Error {
+  constructor(public readonly kind: AiFailureKind) {
     super(kind);
-    this.name = "GroqError";
+    this.name = "AiError";
   }
 }
 
-function groqErrorResponse(error: unknown) {
-  const kind = error instanceof GroqError ? error.kind : "invalid_output";
+function aiErrorResponse(error: unknown) {
+  const kind = error instanceof AiError ? error.kind : "invalid_output";
   switch (kind) {
     case "network":
       return jsonError(
-        "Không thể kết nối tới Groq lúc này. Vui lòng thử lại sau.",
+        "Không thể kết nối tới OpenRouter lúc này. Vui lòng thử lại sau.",
         502,
       );
     case "rate_limit":
       return jsonError(
-        "Groq đang giới hạn tốc độ yêu cầu. Vui lòng đợi một chút rồi thử lại.",
+        "OpenRouter đang giới hạn tốc độ yêu cầu. Vui lòng đợi một chút rồi thử lại.",
         429,
       );
     case "upstream":
       return jsonError(
-        "Groq chưa thể xử lý yêu cầu lúc này. Vui lòng thử lại sau.",
+        "OpenRouter chưa thể xử lý yêu cầu lúc này. Vui lòng thử lại sau.",
         502,
       );
     default:
@@ -126,8 +127,38 @@ function groqErrorResponse(error: unknown) {
   }
 }
 
-/** Calls Groq with a strict JSON schema and returns the parsed JSON object. */
-async function callGroqJson(options: {
+/**
+ * Extracts a JSON object from model output. Reasoning models and providers that don't
+ * enforce structured outputs may wrap the JSON in code fences or add stray text.
+ */
+function parseJsonObject(content: string): Record<string, unknown> {
+  const trimmed = content.trim();
+  const candidates: string[] = [trimmed];
+
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fenced) candidates.push(fenced[1].trim());
+
+  const firstBrace = trimmed.indexOf("{");
+  const lastBrace = trimmed.lastIndexOf("}");
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    candidates.push(trimmed.slice(firstBrace, lastBrace + 1));
+  }
+
+  for (const candidate of candidates) {
+    try {
+      const parsed: unknown = JSON.parse(candidate);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      // Try the next candidate.
+    }
+  }
+  throw new Error("not_an_object");
+}
+
+/** Calls OpenRouter with a JSON schema and returns the parsed JSON object. */
+async function callOpenRouterJson(options: {
   systemPrompt: string;
   userPrompt: string;
   schemaName: string;
@@ -137,20 +168,35 @@ async function callGroqJson(options: {
   timeoutMs: number;
   reasoningEffort?: "low" | "medium" | "high";
 }): Promise<Record<string, unknown>> {
+  // Not every free-tier provider enforces response_format, so the schema is also given in the
+  // prompt and the output is parsed tolerantly.
+  const systemPrompt = [
+    options.systemPrompt,
+    "",
+    "Trả về DUY NHẤT một đối tượng JSON hợp lệ theo JSON Schema sau, không kèm markdown hay giải thích:",
+    JSON.stringify(options.schema),
+  ].join("\n");
+
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+    "Content-Type": "application/json",
+    "X-Title": "SOFTMEAL",
+  };
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (siteUrl) headers["HTTP-Referer"] = siteUrl;
+
   let response: Response;
   try {
-    response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    response = await fetch(OPENROUTER_URL, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers,
       body: JSON.stringify({
         model: MODEL,
         temperature: options.temperature,
+        // On reasoning models max_tokens also covers the reasoning tokens.
         max_tokens: options.maxTokens,
         ...(options.reasoningEffort
-          ? { reasoning_effort: options.reasoningEffort }
+          ? { reasoning: { effort: options.reasoningEffort } }
           : {}),
         response_format: {
           type: "json_schema",
@@ -161,39 +207,43 @@ async function callGroqJson(options: {
           },
         },
         messages: [
-          { role: "system", content: options.systemPrompt },
+          { role: "system", content: systemPrompt },
           { role: "user", content: options.userPrompt },
         ],
       }),
       signal: AbortSignal.timeout(options.timeoutMs),
     });
   } catch {
-    throw new GroqError("network");
+    throw new AiError("network");
   }
 
   if (!response.ok) {
-    throw new GroqError(response.status === 429 ? "rate_limit" : "upstream");
+    console.error(`[video-recipe] OpenRouter HTTP ${response.status}`);
+    throw new AiError(response.status === 429 ? "rate_limit" : "upstream");
   }
 
   try {
     const result = (await response.json()) as {
+      error?: { code?: unknown; message?: unknown };
       choices?: Array<{ message?: { content?: unknown } }>;
     };
+    // OpenRouter can return HTTP 200 with an error object (e.g. upstream provider failure).
+    if (result.error) {
+      console.error("[video-recipe] OpenRouter error payload:", result.error);
+      throw new AiError(result.error.code === 429 ? "rate_limit" : "upstream");
+    }
     const content = result.choices?.[0]?.message?.content;
     if (typeof content !== "string") throw new Error("empty_completion");
-    const parsed: unknown = JSON.parse(content);
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      throw new Error("not_an_object");
-    }
-    return parsed as Record<string, unknown>;
-  } catch {
-    throw new GroqError("invalid_output");
+    return parseJsonObject(content);
+  } catch (error) {
+    if (error instanceof AiError) throw error;
+    throw new AiError("invalid_output");
   }
 }
 
 /**
  * Asks the model whether the video is a culinary video (shows how to prepare food or drinks).
- * Fails closed: any AI/network/format error is thrown as GroqError, never treated as "culinary".
+ * Fails closed: any AI/network/format error is thrown as AiError, never treated as "culinary".
  */
 async function classifyVideoTopic(input: {
   videoId: string;
@@ -221,19 +271,19 @@ async function classifyVideoTopic(input: {
     "</transcript>",
   ].join("\n");
 
-  const parsed = await callGroqJson({
+  const parsed = await callOpenRouterJson({
     systemPrompt,
     userPrompt,
     schemaName: "video_topic",
     schema: topicSchema,
     temperature: 0,
-    maxTokens: 1_000,
-    timeoutMs: 12_000,
+    maxTokens: 2_000,
+    timeoutMs: 15_000,
     reasoningEffort: "low",
   });
 
   if (typeof parsed.isCulinary !== "boolean") {
-    throw new GroqError("invalid_output");
+    throw new AiError("invalid_output");
   }
   const detectedTopic =
     typeof parsed.detectedTopic === "string"
@@ -658,8 +708,8 @@ async function getTranscript(videoId: string): Promise<TranscriptResult> {
 export async function POST(request: NextRequest) {
   // This endpoint no longer depends on Firebase Admin or ID-token verification.
   // Generation is public; the per-IP limit below is only a best-effort safeguard.
-  if (!process.env.GROQ_API_KEY?.trim()) {
-    return jsonError("Máy chủ chưa cấu hình GROQ_API_KEY.", 503);
+  if (!process.env.OPENROUTER_API_KEY?.trim()) {
+    return jsonError("Máy chủ chưa cấu hình OPENROUTER_API_KEY.", 503);
   }
 
   const clientId = getClientIdentifier(request);
@@ -766,7 +816,7 @@ export async function POST(request: NextRequest) {
       );
     }
   } catch (error) {
-    return groqErrorResponse(error);
+    return aiErrorResponse(error);
   }
 
   // Step 2: generate the recipe draft.
@@ -799,17 +849,18 @@ export async function POST(request: NextRequest) {
 
   let parsed: Record<string, unknown>;
   try {
-    parsed = await callGroqJson({
+    parsed = await callOpenRouterJson({
       systemPrompt,
       userPrompt,
       schemaName: "recipe_draft",
       schema: recipeSchema,
       temperature: 0.25,
-      maxTokens: 4_000,
+      maxTokens: 8_000,
       timeoutMs: 40_000,
+      reasoningEffort: "low",
     });
   } catch (error) {
-    return groqErrorResponse(error);
+    return aiErrorResponse(error);
   }
 
   try {
@@ -861,6 +912,6 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch {
-    return groqErrorResponse(new GroqError("invalid_output"));
+    return aiErrorResponse(new AiError("invalid_output"));
   }
 }
