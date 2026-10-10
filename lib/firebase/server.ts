@@ -3,18 +3,6 @@ import "server-only";
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth, type DecodedIdToken } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
-import {
-  getApps as getWebApps,
-  initializeApp as initializeWebApp,
-} from "firebase/app";
-import {
-  collection as webCollection,
-  getDocs as webGetDocs,
-  getFirestore as getWebFirestore,
-  limit as webLimit,
-  query as webQuery,
-  where as webWhere,
-} from "firebase/firestore";
 import type { Recipe } from "@/lib/types";
 
 function getFirebaseAdminApp() {
@@ -25,6 +13,7 @@ function getFirebaseAdminApp() {
   }
 
   const encoded = process.env.FIREBASE_SERVICE_ACCOUNT_B64;
+
   if (!encoded) {
     throw new Error("Missing FIREBASE_SERVICE_ACCOUNT_B64.");
   }
@@ -44,6 +33,7 @@ function getFirebaseAdminApp() {
       "FIREBASE_SERVICE_ACCOUNT_B64 is not valid base64-encoded JSON.",
     );
   }
+
   return initializeApp({
     credential: cert({
       projectId: serviceAccount.project_id,
@@ -60,92 +50,14 @@ export async function verifyFirebaseIdToken(
   return getAuth(getFirebaseAdminApp()).verifyIdToken(idToken);
 }
 
-// Lazy init: avoids failing at import time (e.g. during `next build`).
+// Lazy init: avoids failing at import time (e.g. during `next build`)
 function getDb() {
   return getFirestore(getFirebaseAdminApp());
 }
 
 /**
- * Public recipe lookup for pages that only need metadata / JSON-LD.
- * This uses the Firebase Web SDK when Admin credentials aren't configured,
- * so public recipe pages can still render on Netlify without a service account.
- * Firestore security rules still apply to this lookup.
- */
-function getPublicDb() {
-  const appName = "softmeal-public-recipe-metadata";
-  const existingApp = getWebApps().find((app) => app.name === appName);
-  if (existingApp) {
-    return getWebFirestore(existingApp);
-  }
-
-  const firebaseConfig = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-    measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
-  };
-
-  if (
-    !firebaseConfig.apiKey ||
-    !firebaseConfig.projectId ||
-    !firebaseConfig.appId
-  ) {
-    throw new Error(
-      "Public recipe metadata lookup requires NEXT_PUBLIC_FIREBASE_API_KEY, NEXT_PUBLIC_FIREBASE_PROJECT_ID and NEXT_PUBLIC_FIREBASE_APP_ID.",
-    );
-  }
-
-  const app = initializeWebApp(firebaseConfig, appName);
-  return getWebFirestore(app);
-}
-
-const recipeCategories = [
-  "Breakfast",
-  "Lunch",
-  "Dinner",
-  "Dessert",
-  "Vegan",
-  "Wellness",
-] as const;
-
-function normalizeRecipeForMetadata(
-  id: string,
-  rawData: Record<string, unknown>,
-): Recipe {
-  const category =
-    recipeCategories.find((value) => value === rawData.category) ?? "Breakfast";
-
-  return {
-    ...rawData,
-    id,
-    title:
-      typeof rawData.title === "string" ? rawData.title : "Untitled recipe",
-    slug: typeof rawData.slug === "string" ? rawData.slug : id,
-    description:
-      typeof rawData.description === "string" ? rawData.description : "",
-    ingredients: Array.isArray(rawData.ingredients)
-      ? rawData.ingredients.map(String)
-      : [],
-    steps: Array.isArray(rawData.steps) ? rawData.steps.map(String) : [],
-    category,
-    imageUrl:
-      typeof rawData.imageUrl === "string" ? rawData.imageUrl : undefined,
-    youtubeUrl:
-      typeof rawData.youtubeUrl === "string" ? rawData.youtubeUrl : undefined,
-    nutrition:
-      rawData.nutrition && typeof rawData.nutrition === "object"
-        ? (rawData.nutrition as Recipe["nutrition"])
-        : undefined,
-    userId: typeof rawData.userId === "string" ? rawData.userId : undefined,
-  } as Recipe;
-}
-
-/**
  * Server-only recipe lookup used by Next.js generateMetadata().
- * Prefer Admin SDK when configured; otherwise use a rules-protected public read.
+ * Keep this file free of `use client` and browser-only Firebase APIs.
  */
 export async function fetchRecipesServer(): Promise<Recipe[]> {
   const snapshot = await getDb().collection("recipes").get();
@@ -158,29 +70,102 @@ export async function fetchRecipesServer(): Promise<Recipe[]> {
   });
 }
 
-export async function fetchRecipeBySlugServer(
-  slug: string,
-): Promise<Recipe | null> {
-  if (!process.env.FIREBASE_SERVICE_ACCOUNT_B64?.trim()) {
-    const snapshot = await webGetDocs(
-      webQuery(
-        webCollection(getPublicDb(), "recipes"),
-        webWhere("slug", "==", slug),
-        webLimit(1),
-      ),
-    );
+type FirestoreValue = {
+  stringValue?: string;
+  integerValue?: string;
+  doubleValue?: number;
+  booleanValue?: boolean;
+  timestampValue?: string;
+  nullValue?: null;
+  arrayValue?: { values?: FirestoreValue[] };
+  mapValue?: { fields?: Record<string, FirestoreValue> };
+};
 
-    if (snapshot.empty) {
-      return null;
-    }
-
-    const document = snapshot.docs[0];
-    return normalizeRecipeForMetadata(
-      document.id,
-      document.data() as Record<string, unknown>,
+function decodeFirestoreValue(value: FirestoreValue): unknown {
+  if ("stringValue" in value) return value.stringValue;
+  if ("integerValue" in value) return Number(value.integerValue);
+  if ("doubleValue" in value) return value.doubleValue;
+  if ("booleanValue" in value) return value.booleanValue;
+  if ("timestampValue" in value) return value.timestampValue;
+  if ("arrayValue" in value) {
+    return (value.arrayValue?.values ?? []).map(decodeFirestoreValue);
+  }
+  if ("mapValue" in value) {
+    return Object.fromEntries(
+      Object.entries(value.mapValue?.fields ?? {}).map(([key, nested]) => [
+        key,
+        decodeFirestoreValue(nested),
+      ]),
     );
   }
+  return null;
+}
 
+/**
+ * Fallback used when no Firebase Admin credentials are configured (e.g. on
+ * Netlify without FIREBASE_SERVICE_ACCOUNT_B64). It reads the same public
+ * recipes the browser already reads, through the Firestore REST API using the
+ * public NEXT_PUBLIC_* web config, so it needs no secret.
+ */
+async function fetchRecipeBySlugRest(slug: string): Promise<Recipe | null> {
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+
+  if (!projectId || !apiKey) {
+    return null;
+  }
+
+  const response = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(
+      projectId,
+    )}/databases/(default)/documents:runQuery?key=${encodeURIComponent(apiKey)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        structuredQuery: {
+          from: [{ collectionId: "recipes" }],
+          where: {
+            fieldFilter: {
+              field: { fieldPath: "slug" },
+              op: "EQUAL",
+              value: { stringValue: slug },
+            },
+          },
+          limit: 1,
+        },
+      }),
+      next: { revalidate: 60 },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Firestore REST query failed with ${response.status}.`);
+  }
+
+  const rows = (await response.json()) as Array<{
+    document?: { name: string; fields?: Record<string, FirestoreValue> };
+  }>;
+  const document = rows.find((row) => row.document)?.document;
+
+  if (!document) {
+    return null;
+  }
+
+  const data = Object.fromEntries(
+    Object.entries(document.fields ?? {}).map(([key, value]) => [
+      key,
+      decodeFirestoreValue(value),
+    ]),
+  );
+
+  return {
+    ...data,
+    id: document.name.split("/").pop() ?? "",
+  } as Recipe;
+}
+
+async function fetchRecipeBySlugAdmin(slug: string): Promise<Recipe | null> {
   const snapshot = await getDb()
     .collection("recipes")
     .where("slug", "==", slug)
@@ -192,8 +177,34 @@ export async function fetchRecipeBySlugServer(
   }
 
   const document = snapshot.docs[0];
-  return normalizeRecipeForMetadata(
-    document.id,
-    document.data() as Record<string, unknown>,
-  );
+  const data = document.data();
+
+  return {
+    ...data,
+    id: document.id,
+  } as Recipe;
+}
+
+/**
+ * Server-only lookup used by generateMetadata() and the recipe pages.
+ * It must never throw: the pages render their content client-side, so a
+ * failed lookup should only cost SEO metadata, not turn the route into a 500.
+ */
+export async function fetchRecipeBySlugServer(
+  slug: string,
+): Promise<Recipe | null> {
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_B64?.trim()) {
+    try {
+      return await fetchRecipeBySlugAdmin(slug);
+    } catch (error) {
+      console.error("Firebase Admin recipe lookup failed:", error);
+    }
+  }
+
+  try {
+    return await fetchRecipeBySlugRest(slug);
+  } catch (error) {
+    console.error("Firestore REST recipe lookup failed:", error);
+    return null;
+  }
 }
