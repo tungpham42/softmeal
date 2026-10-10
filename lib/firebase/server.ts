@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cert, getApps, initializeApp } from "firebase-admin/app";
+import { getAuth, type DecodedIdToken } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import type { Recipe } from "@/lib/types";
 
@@ -40,6 +41,11 @@ function getFirebaseAdminApp() {
       privateKey: serviceAccount.private_key,
     }),
   });
+}
+
+/** Verify a Firebase client ID token before a server-side API uses the user identity. */
+export async function verifyFirebaseIdToken(idToken: string): Promise<DecodedIdToken> {
+  return getAuth(getFirebaseAdminApp()).verifyIdToken(idToken);
 }
 
 // Lazy init: avoids failing at import time (e.g. during `next build`)
