@@ -28,10 +28,6 @@ import {
   type NutritionForm,
 } from "@/lib/nutrition";
 
-type GeneratedRecipe = Pick<Recipe, "title" | "description" | "category" | "ingredients" | "steps"> & {
-  nutrition?: NonNullable<Recipe["nutrition"]>;
-};
-
 function EditorForm({
   mode,
   slug,
@@ -49,15 +45,12 @@ function EditorForm({
   const [steps, setSteps] = useState("");
   const [category, setCategory] = useState<Recipe["category"]>("Dinner");
   const [youtubeUrl, setYoutubeUrl] = useState("");
-  const [transcriptInput, setTranscriptInput] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageAuto, setImageAuto] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [busy, setBusy] = useState(false);
-  const [aiBusy, setAiBusy] = useState(false);
-  const [aiMessage, setAiMessage] = useState("");
   const [nutrition, setNutrition] =
     useState<NutritionForm>(EMPTY_NUTRITION_FORM);
 
@@ -102,80 +95,6 @@ function EditorForm({
   }, [youtubeUrl, imageFile]);
 
   const generatedSlug = useMemo(() => slugify(title), [title]);
-
-  async function generateFromYouTube() {
-    if (!currentUser) {
-      setError("Vui lòng đăng nhập trước khi tạo công thức bằng AI.");
-      return;
-    }
-    if (!extractYouTubeId(youtubeUrl)) {
-      setError("Hãy nhập đường dẫn video YouTube hợp lệ trước khi tạo nội dung.");
-      return;
-    }
-
-    const hasExistingContent = Boolean(
-      title.trim() || description.trim() || ingredients.trim() || steps.trim(),
-    );
-    if (
-      hasExistingContent &&
-      !window.confirm(
-        "AI sẽ thay thế tiêu đề, mô tả, nguyên liệu, cách làm, danh mục và dinh dưỡng hiện tại. Bạn muốn tiếp tục?",
-      )
-    ) {
-      return;
-    }
-
-    setAiBusy(true);
-    setError("");
-    setSuccess("");
-    setAiMessage("");
-    try {
-      const idToken = await currentUser.getIdToken();
-      const response = await fetch("/api/ai/generate-recipe", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${idToken}`,
-        },
-        body: JSON.stringify({
-          youtubeUrl: youtubeUrl.trim(),
-          transcript: transcriptInput.trim(),
-        }),
-      });
-      const result = (await response.json()) as {
-        recipe?: GeneratedRecipe;
-        error?: string;
-        source?: { videoTitle?: string; channel?: string; transcriptLanguage?: string };
-      };
-      if (!response.ok) {
-        throw new Error(result.error || "Không thể tạo nội dung từ video này.");
-      }
-      const recipe = result.recipe;
-      if (
-        !recipe ||
-        !recipe.title ||
-        !recipe.description ||
-        !Array.isArray(recipe.ingredients) ||
-        !Array.isArray(recipe.steps)
-      ) {
-        throw new Error("AI trả về bản nháp chưa đầy đủ. Vui lòng thử lại.");
-      }
-
-      setTitle(recipe.title);
-      setDescription(recipe.description);
-      setCategory(recipe.category);
-      setIngredients(recipe.ingredients.join("\n"));
-      setSteps(recipe.steps.join("\n"));
-      setNutrition(nutritionToForm(recipe.nutrition));
-      setAiMessage(
-        `Đã tạo bản nháp${result.source?.videoTitle ? ` từ video “${result.source.videoTitle}”` : " từ video YouTube"}. Hãy kiểm tra định lượng, cách làm và các ước tính dinh dưỡng trước khi lưu.`,
-      );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Không thể tạo công thức bằng AI.");
-    } finally {
-      setAiBusy(false);
-    }
-  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -245,7 +164,7 @@ function EditorForm({
         </h1>
         <p className="text-sm leading-6 text-muted">
           Ghi lại món ngon theo cách dễ đọc, dễ nấu và dễ truyền lại cho người
-          thân. Bạn cũng có thể tạo bản nháp từ video YouTube bằng AI.
+          thân.
         </p>
       </div>
       <div className="rounded-[2rem] border border-border bg-card p-5 shadow-sm sm:p-8">
@@ -303,16 +222,14 @@ function EditorForm({
                 placeholder="Chọn danh mục"
               />
             </label>
-            <div className="block">
-              <label htmlFor="recipe-youtube-url" className="form-label">
-                <Icon name="youtube" size={15} /> Video YouTube
-              </label>
+            <label className="block">
+              <span className="form-label">
+                <Icon name="youtube" size={15} /> Video YouTube (tuỳ chọn)
+              </span>
               <input
-                id="recipe-youtube-url"
                 value={youtubeUrl}
                 onChange={(e) => {
                   setYoutubeUrl(e.target.value);
-                  setAiMessage("");
                   if (imageAuto) {
                     setImageUrl("");
                     setImageAuto(false);
@@ -321,53 +238,7 @@ function EditorForm({
                 className="form-input"
                 placeholder="https://www.youtube.com/..."
               />
-              <p className="mt-2 text-xs leading-5 text-muted">
-                AI đọc phụ đề video để soạn tiêu đề, mô tả, nguyên liệu, cách làm và dinh dưỡng.
-              </p>
-            </div>
-            <div className="md:col-span-2 rounded-2xl border border-border bg-cream/40 p-4 sm:p-5">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="font-semibold text-ink">Tạo nội dung bằng AI</h2>
-                  <p className="mt-1 text-xs leading-5 text-muted">
-                    Dùng Groq GPT-OSS 120B. AI tạo bản nháp để bạn xem lại; công thức chưa được lưu cho đến khi bấm nút đăng.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => void generateFromYouTube()}
-                  disabled={aiBusy || busy || !youtubeUrl.trim()}
-                  className="btn-primary shrink-0 justify-center disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {aiBusy ? (
-                    <span className="size-4 animate-spin rounded-full border-2 border-ivory/30 border-t-ivory" />
-                  ) : (
-                    <Icon name="refresh" size={17} />
-                  )}{" "}
-                  {aiBusy ? "Đang tạo bản nháp..." : "Tạo công thức bằng AI"}
-                </button>
-              </div>
-              <label className="mt-4 block">
-                <span className="mb-1 block text-sm font-medium text-ink">
-                  Lời thoại / phụ đề video (không bắt buộc)
-                </span>
-                <textarea
-                  value={transcriptInput}
-                  onChange={(e) => setTranscriptInput(e.target.value)}
-                  className="form-input min-h-24"
-                  maxLength={60000}
-                  placeholder="Để trống để AI tự lấy phụ đề YouTube. Nếu video không có phụ đề hoặc máy chủ không đọc được, hãy dán lời thoại/mô tả vào đây."
-                />
-                <span className="mt-1 block text-xs text-muted">
-                  {transcriptInput.length.toLocaleString("vi-VN")} / 60.000 ký tự
-                </span>
-              </label>
-              {aiMessage && (
-                <p className="mt-3 text-sm leading-6 text-green-800" role="status">
-                  {aiMessage}
-                </p>
-              )}
-            </div>
+            </label>
             <label className="block md:col-span-2">
               <span className="form-label">
                 <Icon name="list" size={15} /> Nguyên liệu{" "}
@@ -481,7 +352,7 @@ function EditorForm({
             <Link href="/" className="btn-secondary justify-center">
               Huỷ
             </Link>
-            <button disabled={busy || aiBusy} className="btn-primary justify-center">
+            <button disabled={busy} className="btn-primary justify-center">
               {busy ? (
                 <span className="size-4 animate-spin rounded-full border-2 border-ivory/30 border-t-ivory" />
               ) : (
