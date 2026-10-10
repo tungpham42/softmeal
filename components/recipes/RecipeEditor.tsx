@@ -28,7 +28,10 @@ import {
   type NutritionForm,
 } from "@/lib/nutrition";
 
-type GeneratedRecipe = Pick<Recipe, "title" | "description" | "category" | "ingredients" | "steps"> & {
+type GeneratedRecipe = Pick<
+  Recipe,
+  "title" | "description" | "category" | "ingredients" | "steps"
+> & {
   nutrition?: NonNullable<Recipe["nutrition"]>;
 };
 
@@ -109,7 +112,9 @@ function EditorForm({
       return;
     }
     if (!extractYouTubeId(youtubeUrl)) {
-      setError("Hãy nhập đường dẫn video YouTube hợp lệ trước khi tạo nội dung.");
+      setError(
+        "Hãy nhập đường dẫn video YouTube hợp lệ trước khi tạo nội dung.",
+      );
       return;
     }
 
@@ -145,7 +150,11 @@ function EditorForm({
       const result = (await response.json()) as {
         recipe?: GeneratedRecipe;
         error?: string;
-        source?: { videoTitle?: string; channel?: string; transcriptLanguage?: string };
+        source?: {
+          videoTitle?: string;
+          channel?: string;
+          transcriptLanguage?: string;
+        };
       };
       if (!response.ok) {
         throw new Error(result.error || "Không thể tạo nội dung từ video này.");
@@ -171,7 +180,9 @@ function EditorForm({
         `Đã tạo bản nháp${result.source?.videoTitle ? ` từ video “${result.source.videoTitle}”` : " từ video YouTube"}. Hãy kiểm tra định lượng, cách làm và các ước tính dinh dưỡng trước khi lưu.`,
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Không thể tạo công thức bằng AI.");
+      setError(
+        err instanceof Error ? err.message : "Không thể tạo công thức bằng AI.",
+      );
     } finally {
       setAiBusy(false);
     }
@@ -322,15 +333,19 @@ function EditorForm({
                 placeholder="https://www.youtube.com/..."
               />
               <p className="mt-2 text-xs leading-5 text-muted">
-                AI đọc phụ đề video để soạn tiêu đề, mô tả, nguyên liệu, cách làm và dinh dưỡng.
+                AI đọc phụ đề video để soạn tiêu đề, mô tả, nguyên liệu, cách
+                làm và dinh dưỡng.
               </p>
             </div>
             <div className="md:col-span-2 rounded-2xl border border-border bg-cream/40 p-4 sm:p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="font-semibold text-ink">Tạo nội dung bằng AI</h2>
+                  <h2 className="font-semibold text-ink">
+                    Tạo nội dung bằng AI
+                  </h2>
                   <p className="mt-1 text-xs leading-5 text-muted">
-                    Dùng Groq GPT-OSS 120B. AI tạo bản nháp để bạn xem lại; công thức chưa được lưu cho đến khi bấm nút đăng.
+                    Dùng AI tạo bản nháp để bạn xem lại; công thức chưa được lưu
+                    cho đến khi bấm nút đăng.
                   </p>
                 </div>
                 <button
@@ -359,11 +374,15 @@ function EditorForm({
                   placeholder="Để trống để AI tự lấy phụ đề YouTube. Nếu video không có phụ đề hoặc máy chủ không đọc được, hãy dán lời thoại/mô tả vào đây."
                 />
                 <span className="mt-1 block text-xs text-muted">
-                  {transcriptInput.length.toLocaleString("vi-VN")} / 60.000 ký tự
+                  {transcriptInput.length.toLocaleString("vi-VN")} / 60.000 ký
+                  tự
                 </span>
               </label>
               {aiMessage && (
-                <p className="mt-3 text-sm leading-6 text-green-800" role="status">
+                <p
+                  className="mt-3 text-sm leading-6 text-green-800"
+                  role="status"
+                >
                   {aiMessage}
                 </p>
               )}
@@ -481,7 +500,10 @@ function EditorForm({
             <Link href="/" className="btn-secondary justify-center">
               Huỷ
             </Link>
-            <button disabled={busy || aiBusy} className="btn-primary justify-center">
+            <button
+              disabled={busy || aiBusy}
+              className="btn-primary justify-center"
+            >
               {busy ? (
                 <span className="size-4 animate-spin rounded-full border-2 border-ivory/30 border-t-ivory" />
               ) : (
