@@ -100,6 +100,13 @@ const features: Feature[] = [
     href: "/them",
     linkLabel: "Tự thêm công thức",
   },
+  {
+    icon: "check",
+    title: "Tham khảo dinh dưỡng",
+    text: "Xem thông tin về năng lượng, chất đạm, tinh bột, chất béo, chất xơ và các chỉ số khác khi công thức có cung cấp dữ liệu. Giúp bạn có thêm thông tin để cân nhắc món ăn và khẩu phần phù hợp.",
+    href: "/",
+    linkLabel: "Khám phá món ăn",
+  },
 ];
 
 export default function AboutPage() {
@@ -159,7 +166,10 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="rounded-[2rem] border border-gold/30 bg-gold/10 p-6 sm:p-8" aria-labelledby="about-ai-title">
+      <section
+        className="rounded-[2rem] border border-gold/30 bg-gold/10 p-6 sm:p-8"
+        aria-labelledby="about-ai-title"
+      >
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
           <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-gold/25 text-lacquer">
             <Icon name="youtube" size={23} />
@@ -168,7 +178,10 @@ export default function AboutPage() {
             <span className="eyebrow">
               <Icon name="refresh" size={15} /> Tiện ích nổi bật
             </span>
-            <h2 id="about-ai-title" className="mt-2 font-serif text-2xl font-bold text-lacquer sm:text-3xl">
+            <h2
+              id="about-ai-title"
+              className="mt-2 font-serif text-2xl font-bold text-lacquer sm:text-3xl"
+            >
               Biến video nấu ăn thành bản nháp công thức với AI
             </h2>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
@@ -230,8 +243,8 @@ export default function AboutPage() {
             Các công cụ cho căn bếp mỗi ngày
           </h2>
           <p className="mt-2 max-w-3xl text-sm leading-7 text-muted">
-            Mỗi tính năng giải quyết một việc cụ thể — từ tìm cảm hứng đến
-            chuẩn bị nguyên liệu và chia sẻ kinh nghiệm nấu nướng.
+            Mỗi tính năng giải quyết một việc cụ thể — từ tìm cảm hứng đến chuẩn
+            bị nguyên liệu và chia sẻ kinh nghiệm nấu nướng.
           </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -269,8 +282,8 @@ export default function AboutPage() {
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-muted">
           Hãy chia sẻ món ăn bạn tâm đắc, gửi góp ý về trải nghiệm hoặc kết nối
-          với chúng tôi nếu có ý tưởng hợp tác. Những đóng góp thiết thực giúp
-          {" "}{SITE_NAME} ngày càng hữu ích hơn cho người yêu nấu ăn.
+          với chúng tôi nếu có ý tưởng hợp tác. Những đóng góp thiết thực giúp{" "}
+          {SITE_NAME} ngày càng hữu ích hơn cho người yêu nấu ăn.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Link href="/them" className="btn-primary">
