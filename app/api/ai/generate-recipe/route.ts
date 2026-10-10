@@ -289,7 +289,7 @@ function ytFetch(input: RequestInfo | URL, init: RequestInit = {}) {
   return fetch(input, init);
 }
 
-const MIN_DESCRIPTION_CHARS = 200;
+const MIN_DESCRIPTION_CHARS = 50;
 
 type DescriptionResult = { text: string | null; reason: string };
 
