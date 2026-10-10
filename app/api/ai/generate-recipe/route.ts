@@ -278,12 +278,63 @@ function consumeGenerationLimit(clientId: string): boolean {
   return true;
 }
 
+// ---------------------------------------------------------------------------
+// YouTube access
+// ---------------------------------------------------------------------------
+// YouTube often blocks datacenter IPs (Netlify/AWS Lambda...), so scraping captions can
+// fail once deployed even though it works on localhost. When that happens we fall back to
+// the OFFICIAL YouTube Data API (API key, works from any server) and use the video
+// description, which many cooking channels fill with the ingredients and steps.
+function ytFetch(input: RequestInfo | URL, init: RequestInit = {}) {
+  return fetch(input, init);
+}
+
+const MIN_DESCRIPTION_CHARS = 200;
+
+async function getVideoDescription(videoId: string): Promise<string | null> {
+  const apiKey = process.env.YOUTUBE_API_KEY?.trim();
+  if (!apiKey) {
+    console.error(
+      "[video-recipe] YOUTUBE_API_KEY is not set; description fallback skipped",
+    );
+    return null;
+  }
+  try {
+    const url = new URL("https://www.googleapis.com/youtube/v3/videos");
+    url.searchParams.set("part", "snippet");
+    url.searchParams.set("id", videoId);
+    url.searchParams.set("key", apiKey);
+    const response = await fetch(url, { signal: AbortSignal.timeout(7_000) });
+    if (!response.ok) {
+      console.error(
+        `[video-recipe] YouTube Data API failed: HTTP ${response.status}`,
+      );
+      return null;
+    }
+    const data = (await response.json()) as {
+      items?: Array<{ snippet?: { description?: unknown } }>;
+    };
+    const description = data.items?.[0]?.snippet?.description;
+    if (typeof description !== "string") return null;
+    const text = description
+      .replace(/https?:\/\/\S+/g, "")
+      .replace(/[ \t]+/g, " ")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim()
+      .slice(0, MAX_TRANSCRIPT_CHARS);
+    return text.length >= MIN_DESCRIPTION_CHARS ? text : null;
+  } catch (error) {
+    console.error("[video-recipe] YouTube Data API error:", error);
+    return null;
+  }
+}
+
 async function getVideoMetadata(
   videoId: string,
 ): Promise<{ title: string; channel: string }> {
   try {
     const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-    const response = await fetch(
+    const response = await ytFetch(
       `https://www.youtube.com/oembed?url=${encodeURIComponent(videoUrl)}&format=json`,
       { signal: AbortSignal.timeout(5_000) },
     );
@@ -414,14 +465,19 @@ async function fetchCaptionTrack(
 
   for (const candidate of candidates) {
     try {
-      const response = await fetch(candidate, {
+      const response = await ytFetch(candidate, {
         headers: {
           "User-Agent":
             "Mozilla/5.0 (compatible; SOFTMEAL recipe assistant/1.0)",
         },
         signal: AbortSignal.timeout(6_000),
       });
-      if (!response.ok) continue;
+      if (!response.ok) {
+        console.error(
+          `[video-recipe] caption track request failed: HTTP ${response.status}`,
+        );
+        continue;
+      }
       const payload = (await response.text()).slice(0, 2_000_000);
       const text = parseCaptionPayload(payload)
         .replace(/\s+/g, " ")
@@ -465,7 +521,7 @@ async function fetchTranscriptViaPlayerClients(
   const trackGroups = await Promise.all(
     clients.map(async (client) => {
       try {
-        const response = await fetch(YOUTUBE_PLAYER_ENDPOINT, {
+        const response = await ytFetch(YOUTUBE_PLAYER_ENDPOINT, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -484,7 +540,12 @@ async function fetchTranscriptViaPlayerClients(
           }),
           signal: AbortSignal.timeout(7_000),
         });
-        if (!response.ok) return [] as YouTubeCaptionTrack[];
+        if (!response.ok) {
+          console.error(
+            `[video-recipe] player client ${client.name} failed: HTTP ${response.status}`,
+          );
+          return [] as YouTubeCaptionTrack[];
+        }
 
         const player = (await response.json()) as {
           captions?: {
@@ -496,7 +557,11 @@ async function fetchTranscriptViaPlayerClients(
         return (
           player.captions?.playerCaptionsTracklistRenderer?.captionTracks ?? []
         );
-      } catch {
+      } catch (error) {
+        console.error(
+          `[video-recipe] player client ${client.name} error:`,
+          error,
+        );
         return [] as YouTubeCaptionTrack[];
       }
     }),
@@ -547,7 +612,7 @@ async function getTranscript(videoId: string): Promise<TranscriptResult> {
   try {
     const segments = await fetchTranscript(videoId, {
       fetch: (input, init) =>
-        fetch(input, { ...init, signal: AbortSignal.timeout(7_000) }),
+        ytFetch(input, { ...init, signal: AbortSignal.timeout(7_000) }),
     });
     const text = segments
       .map((segment) => segment.text)
@@ -561,8 +626,9 @@ async function getTranscript(videoId: string): Promise<TranscriptResult> {
         language: segments.find((segment) => segment.lang)?.lang ?? "unknown",
       };
     }
-  } catch {
+  } catch (error) {
     // The package uses an unofficial YouTube endpoint and can fail for some videos.
+    console.error("[video-recipe] youtube-transcript failed:", error);
   }
 
   // Try several additional public player clients before asking the user for a transcript.
@@ -613,16 +679,28 @@ export async function POST(request: NextRequest) {
   let transcriptLanguage = suppliedTranscript
     ? "do người dùng cung cấp"
     : "unknown";
+  let sourceKind: "user" | "transcript" | "description" = suppliedTranscript
+    ? "user"
+    : "transcript";
   if (!transcriptText) {
     try {
       const transcript = await getTranscript(videoId);
       transcriptText = transcript.text;
       transcriptLanguage = transcript.language;
-    } catch {
-      return jsonError(
-        "Đã thử nhiều cách lấy phụ đề nhưng YouTube vẫn không cung cấp transcript cho video này. Video có thể không có phụ đề công khai hoặc YouTube đang chặn yêu cầu từ máy chủ. Hãy bật phụ đề công khai hoặc dán lời thoại vào ô ghi chú; hệ thống không tự bịa nội dung video.",
-        422,
-      );
+    } catch (error) {
+      console.error("[video-recipe] all transcript methods failed:", error);
+      // Fallback: the video description via the official YouTube Data API.
+      const description = await getVideoDescription(videoId);
+      if (description) {
+        transcriptText = description;
+        transcriptLanguage = "mô tả video";
+        sourceKind = "description";
+      } else {
+        return jsonError(
+          "Không lấy được phụ đề của video này (YouTube có thể đang chặn máy chủ, hoặc video không có phụ đề công khai) và phần mô tả video cũng không đủ nội dung để tạo công thức. Hãy dán lời thoại hoặc công thức từ mô tả video vào ô ghi chú; hệ thống không tự bịa nội dung video.",
+          422,
+        );
+      }
     }
   }
 
@@ -681,6 +759,9 @@ export async function POST(request: NextRequest) {
     `Video title: ${metadata.title || "Không lấy được tiêu đề"}`,
     `Channel: ${metadata.channel || "Không rõ"}`,
     `Transcript language: ${transcriptLanguage}`,
+    sourceKind === "description"
+      ? "Source type: phần MÔ TẢ video do người đăng tải viết, không phải lời thoại trong video. Chỉ dùng những gì mô tả thực sự nêu."
+      : "Source type: lời thoại (transcript) của video.",
     "",
     "Hãy soạn công thức từ nội dung sau. Nếu transcript không đủ căn cứ cho một chi tiết, đừng trình bày chi tiết đó như một sự thật chắc chắn.",
     "<transcript>",
@@ -747,6 +828,7 @@ export async function POST(request: NextRequest) {
         videoTitle: metadata.title,
         channel: metadata.channel,
         transcriptLanguage,
+        sourceKind,
         transcriptProvidedByUser: Boolean(suppliedTranscript),
       },
     });
