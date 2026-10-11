@@ -1,7 +1,13 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import type { Comment, Recipe } from "@/lib/types";
@@ -348,6 +354,127 @@ function ShareLinks({ title }: { title: string }) {
   );
 }
 
+function ShoppingModal({
+  ingredient,
+  onClose,
+}: {
+  ingredient: string;
+  onClose: () => void;
+}) {
+  const keyword = getIngredientKeyword(ingredient);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="shopping-modal-title"
+        onClick={(e) => e.stopPropagation()}
+        className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-border bg-card shadow-[0_18px_70px_rgba(83,43,23,0.25)] sm:rounded-3xl"
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
+          <div>
+            <h2
+              id="shopping-modal-title"
+              className="font-serif text-xl font-bold text-ink"
+            >
+              Tìm nơi mua và địa chỉ
+            </h2>
+
+            <p className="mt-1 text-sm text-muted">
+              Nguyên liệu: <strong className="text-ink">{keyword}</strong>
+            </p>
+          </div>
+
+          <button
+            type="button"
+            autoFocus
+            onClick={onClose}
+            aria-label="Đóng"
+            className="grid size-9 shrink-0 place-items-center rounded-full text-muted transition hover:bg-cream hover:text-lacquer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lacquer"
+          >
+            <Icon name="close" size={18} />
+          </button>
+        </div>
+
+        <div className="space-y-2 overflow-y-auto px-5 py-4">
+          {SHOPPING_PLACES.map((place) => (
+            <div key={place.name} className="rounded-xl bg-cream/50 p-3">
+              <a
+                href={place.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm font-bold text-ink hover:text-lacquer"
+              >
+                {place.name}
+                <Icon name="external-link" size={13} />
+              </a>
+
+              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-2">
+                <a
+                  href={getIngredientSearchUrl(keyword, place.domain)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-semibold text-lacquer underline underline-offset-4"
+                  aria-label={`Tìm ${keyword} tại ${place.name}`}
+                >
+                  Tìm “{keyword}”
+                </a>
+
+                <a
+                  href={getStoreAddressUrl(place.name)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-semibold text-bamboo underline underline-offset-4"
+                  aria-label={`Xem địa chỉ ${place.name} gần bạn`}
+                >
+                  Xem địa chỉ cửa hàng
+                </a>
+              </div>
+            </div>
+          ))}
+
+          <a
+            href={getMarketAddressUrl(keyword)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 rounded-xl border border-bamboo/20 bg-bamboo/5 p-3 text-xs font-semibold text-bamboo transition hover:bg-bamboo/10"
+          >
+            <Icon name="map-pin" size={17} />
+
+            <span>Tìm chợ bán {keyword} gần bạn</span>
+
+            <Icon name="chevron-right" size={15} className="ml-auto shrink-0" />
+          </a>
+
+          <p className="pt-2 text-xs leading-5 text-muted">
+            Kết quả tìm kiếm, giá bán, tồn kho và địa chỉ thực tế cần được xác
+            nhận trên website hoặc bản đồ.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function RecipeDetail() {
   const { slug } = useParams<{ slug: string }>();
   const { currentUser, isAdmin } = useAuth();
@@ -362,12 +489,17 @@ export default function RecipeDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [commentBusy, setCommentBusy] = useState(false);
+  const [shoppingIngredient, setShoppingIngredient] = useState<string | null>(
+    null,
+  );
 
   const [doneIngredients, setDoneIngredients] = useState<Set<number>>(
     () => new Set(),
   );
 
   const [doneSteps, setDoneSteps] = useState<Set<number>>(() => new Set());
+
+  const closeShoppingModal = useCallback(() => setShoppingIngredient(null), []);
 
   function toggleItem(
     setter: (updater: (prev: Set<number>) => Set<number>) => void,
@@ -640,7 +772,6 @@ export default function RecipeDetail() {
                 <ul className="mt-4 grid gap-x-10 rounded-3xl bg-cream/50 px-5 py-2 sm:grid-cols-2 sm:px-6">
                   {recipe.ingredients.map((item, index) => {
                     const done = doneIngredients.has(index);
-                    const ingredientKeyword = getIngredientKeyword(item);
 
                     return (
                       <li
@@ -674,80 +805,16 @@ export default function RecipeDetail() {
                           </span>
                         </button>
 
-                        {/* Expand to see retailers and addresses for this ingredient */}
-                        <details className="mt-2 rounded-xl border border-border bg-card px-3 py-2">
-                          <summary className="cursor-pointer py-1 text-xs font-bold text-lacquer">
-                            Tìm nơi mua và địa chỉ
-                          </summary>
-
-                          <div className="mt-3 space-y-2">
-                            {SHOPPING_PLACES.map((place) => (
-                              <div
-                                key={place.name}
-                                className="rounded-xl bg-cream/50 p-3"
-                              >
-                                <a
-                                  href={place.website}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-sm font-bold text-ink hover:text-lacquer"
-                                >
-                                  {place.name}
-                                  <span aria-hidden> ↗</span>
-                                </a>
-
-                                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-2">
-                                  <a
-                                    href={getIngredientSearchUrl(
-                                      ingredientKeyword,
-                                      place.domain,
-                                    )}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-xs font-semibold text-lacquer underline underline-offset-4"
-                                    aria-label={`Tìm ${ingredientKeyword} tại ${place.name}`}
-                                  >
-                                    Tìm “{ingredientKeyword}”
-                                  </a>
-
-                                  <a
-                                    href={getStoreAddressUrl(place.name)}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-xs font-semibold text-bamboo underline underline-offset-4"
-                                    aria-label={`Xem địa chỉ ${place.name} gần bạn`}
-                                  >
-                                    Xem địa chỉ cửa hàng
-                                  </a>
-                                </div>
-                              </div>
-                            ))}
-
-                            <a
-                              href={getMarketAddressUrl(ingredientKeyword)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2 rounded-xl border border-bamboo/20 bg-bamboo/5 p-3 text-xs font-semibold text-bamboo transition hover:bg-bamboo/10"
-                            >
-                              <Icon name="map-pin" size={17} />
-
-                              <span>
-                                Tìm chợ bán {ingredientKeyword} gần bạn
-                              </span>
-
-                              <Icon
-                                name="chevron-right"
-                                size={15}
-                                className="ml-auto shrink-0"
-                              />
-                            </a>
-                          </div>
-
-                          <p className="mt-3 text-xs leading-5 text-muted">
-                            Kết quả tìm kiếm, giá bán, tồn kho và địa chỉ thực
-                            tế cần được xác nhận trên website hoặc bản đồ.
-                          </p>
-                        </details>
+                        {/* Open a modal with retailers and addresses for this ingredient */}
+                        <button
+                          type="button"
+                          onClick={() => setShoppingIngredient(item)}
+                          aria-haspopup="dialog"
+                          className="mt-2 inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-bold text-lacquer transition hover:bg-cream focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lacquer"
+                        >
+                          <Icon name="map-pin" size={14} />
+                          Tìm nơi mua và địa chỉ
+                        </button>
                       </li>
                     );
                   })}
@@ -991,6 +1058,13 @@ export default function RecipeDetail() {
           </div>
         </div>
       </div>
+
+      {shoppingIngredient !== null && (
+        <ShoppingModal
+          ingredient={shoppingIngredient}
+          onClose={closeShoppingModal}
+        />
+      )}
     </article>
   );
 }

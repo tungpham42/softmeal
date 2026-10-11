@@ -40,7 +40,8 @@ export type IconName =
   | "phone"
   | "map-pin"
   | "send"
-  | "heart";
+  | "heart"
+  | "external-link";
 
 const paths: Record<IconName, ReactNode> = {
   home: <path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />,
@@ -230,6 +231,12 @@ const paths: Record<IconName, ReactNode> = {
   send: <path d="M21 3 3 10l7 3 3 7zM10 13l11-10" />,
   heart: (
     <path d="M12 20s-8-4.6-8-10.5A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 8 2.5C20 15.4 12 20 12 20z" />
+  ),
+  "external-link": (
+    <>
+      <path d="M14 4h6v6M20 4l-9 9" />
+      <path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4" />
+    </>
   ),
 };
 
