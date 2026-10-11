@@ -804,7 +804,7 @@ export async function POST(request: NextRequest) {
       userPrompt,
       schemaName: "recipe_draft",
       schema: recipeSchema,
-      temperature: 0.25,
+      temperature: 0,
       maxTokens: 4_000,
       timeoutMs: 40_000,
     });
