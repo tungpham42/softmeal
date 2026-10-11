@@ -1,4 +1,5 @@
 "use client";
+
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
@@ -27,6 +28,134 @@ function subscribeToLocation() {
 
 const RECENT_COMMENT_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
 
+/**
+ * Online retailers.
+ *
+ * Product searches use Google site-restricted search so this implementation
+ * does not require paid APIs, API keys, or changes to the Recipe data model.
+ */
+const SHOPPING_PLACES = [
+  {
+    name: "Bách hóa XANH",
+    domain: "bachhoaxanh.com",
+    website: "https://www.bachhoaxanh.com/",
+  },
+  {
+    name: "LOTTE Mart",
+    domain: "lottemart.vn",
+    website: "https://www.lottemart.vn/",
+  },
+  {
+    name: "Co.op Online",
+    domain: "cooponline.vn",
+    website: "https://cooponline.vn/",
+  },
+  {
+    name: "Kingfoodmart",
+    domain: "kingfoodmart.com",
+    website: "https://kingfoodmart.com/",
+  },
+  {
+    name: "WinMart",
+    domain: "winmart.vn",
+    website: "https://winmart.vn/",
+  },
+] as const;
+
+/**
+ * Measurement units commonly found in Vietnamese recipe ingredients.
+ * Longer multi-word units come first so "muỗng canh" is removed as a whole.
+ */
+const INGREDIENT_UNIT_PATTERN = String.raw`(?:muỗng\s+cà\s+phê|muỗng\s+canh|muỗng\s+cafe|thìa\s+cà\s+phê|thìa\s+canh|tablespoons?|teaspoons?|tbsp|tsp|kilograms?|kilogrammes?|kg|grams?|grammes?|gam|gr|g|milligrams?|mg|millilit(?:er|re)s?|ml|lit(?:er|re)s?|lít|litre|liter|cc|ounces?|oz|pounds?|lbs?|cốc|chén|bát|ly|quả|trái|củ|cây|nhánh|tép|lát|miếng|bó|gói|bịch|hộp|chai|túi|lon|con|cái|viên|ổ|tờ|nắm|nhúm|ít|phần|chiếc|cups?)`;
+
+/** Integer, decimal, range, fraction, mixed fraction, or common fraction glyph. */
+const INGREDIENT_QUANTITY_PATTERN = String.raw`(?:\d+\s+\d+\s*\/\s*\d+|\d+(?:[.,]\d+)?(?:\s*(?:-|–|—|đến)\s*\d+(?:[.,]\d+)?)?(?:\s*\/\s*\d+(?:[.,]\d+)?)?|[¼½¾⅓⅔⅛⅜⅝⅞])`;
+
+/**
+ * Remove recipe quantities and measurement units from an ingredient name,
+ * while keeping the ingredient keywords used for retailer and Maps searches.
+ * Examples:
+ *   "Bột mì 250g"          -> "Bột mì"
+ *   "250 g bột mì"         -> "bột mì"
+ *   "2 quả trứng gà"       -> "trứng gà"
+ *   "1/2 muỗng cà phê muối" -> "muối"
+ */
+function getIngredientKeyword(ingredient: string): string {
+  const unit = `${INGREDIENT_UNIT_PATTERN}(?=$|\\s|[,;:.)])`;
+  const quantity = INGREDIENT_QUANTITY_PATTERN;
+  let keyword = ingredient.normalize("NFC").trim();
+
+  // Remove parenthetical quantity notes such as "(250g)" or "(2 quả)".
+  const parentheticalQuantity = new RegExp(
+    String.raw`\([^)]*${quantity}\s*${unit}[^)]*\)`,
+    "gi",
+  );
+  keyword = keyword.replace(parentheticalQuantity, " ");
+
+  // Remove a quantity/unit prefix, e.g. "250 g bột mì" or "2 quả trứng".
+  const prefixQuantity = new RegExp(
+    String.raw`^\s*(?:(?:khoảng|tầm|chừng|about|approximately)\s*)?${quantity}\s*(?:${unit})?\s*`,
+    "i",
+  );
+  keyword = keyword.replace(prefixQuantity, "");
+
+  // Remove a quantity/unit suffix, e.g. "Bột mì 250g" or "Muối: 1/2 thìa cà phê".
+  const suffixQuantity = new RegExp(
+    String.raw`\s*(?:[:=,;\-–—]\s*)?(?:(?:khoảng|tầm|chừng|about|approximately)\s*)?${quantity}\s*${unit}\s*$`,
+    "i",
+  );
+  keyword = keyword.replace(suffixQuantity, "");
+
+  // Tidy punctuation left by removing quantities and measurements.
+  keyword = keyword
+    .replace(/\s+([,;:])/g, "$1")
+    .replace(/^[\s,;:–—-]+|[\s,;:–—-]+$/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  // Avoid producing an empty search if the input is an unusual ingredient.
+  return keyword || ingredient.trim();
+}
+
+/**
+ * Search for only the ingredient keywords within a specific retailer's website.
+ * Example: "Bột mì site:bachhoaxanh.com", not "Bột mì 250g ...".
+ */
+function getIngredientSearchUrl(ingredient: string, domain: string): string {
+  const keyword = getIngredientKeyword(ingredient);
+  const query = `${keyword} site:${domain}`;
+
+  return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+}
+
+/**
+ * Search Google Maps for nearby branches of a particular retailer.
+ * Google Maps can show branch addresses and directions.
+ */
+function getStoreAddressUrl(storeName: string): string {
+  const query = `${storeName} gần tôi`;
+
+  return (
+    "https://www.google.com/maps/search/?api=1&query=" +
+    encodeURIComponent(query)
+  );
+}
+
+/**
+ * Search Google Maps for traditional markets near the user.
+ */
+function getMarketAddressUrl(ingredient?: string): string {
+  const keyword = ingredient ? getIngredientKeyword(ingredient) : "";
+  const query = keyword
+    ? `chợ thực phẩm bán ${keyword} gần tôi`
+    : "chợ thực phẩm gần tôi";
+
+  return (
+    "https://www.google.com/maps/search/?api=1&query=" +
+    encodeURIComponent(query)
+  );
+}
+
 function formatCommentDate(createdAt: unknown) {
   if (!createdAt) return "";
 
@@ -49,6 +178,7 @@ function formatCommentDate(createdAt: unknown) {
     const seconds = Number(createdAt.seconds);
     const nanoseconds =
       "nanoseconds" in createdAt ? Number(createdAt.nanoseconds) : 0;
+
     date = new Date(seconds * 1000 + nanoseconds / 1_000_000);
   } else {
     date = new Date(createdAt as string | number);
@@ -76,6 +206,7 @@ function formatCommentDate(createdAt: unknown) {
     }
 
     const elapsedDays = Math.floor(elapsedHours / 24);
+
     return `${elapsedDays} ngày trước`;
   }
 
@@ -88,6 +219,7 @@ function formatCommentDate(createdAt: unknown) {
     hour12: false,
   });
 }
+
 /**
  * Accept only secure links that point to YouTube, so a recipe source cannot
  * accidentally render an unsafe or unrelated external URL.
@@ -98,13 +230,17 @@ function getYouTubeSourceUrl(url?: string | null): string | null {
   try {
     const parsed = new URL(url);
     const hostname = parsed.hostname.toLowerCase();
+
     const isYouTubeDomain =
       hostname === "youtube.com" ||
       hostname.endsWith(".youtube.com") ||
       hostname === "youtu.be" ||
       hostname.endsWith(".youtu.be");
 
-    if (parsed.protocol !== "https:" || !isYouTubeDomain) return null;
+    if (parsed.protocol !== "https:" || !isYouTubeDomain) {
+      return null;
+    }
+
     return parsed.toString();
   } catch {
     return null;
@@ -114,15 +250,19 @@ function getYouTubeSourceUrl(url?: string | null): string | null {
 function getLocationHref() {
   return window.location.href;
 }
+
 function ShareLinks({ title }: { title: string }) {
   const url = useSyncExternalStore(
     subscribeToLocation,
     getLocationHref,
     () => "",
   );
+
   if (!url) return null;
+
   const encodedUrl = encodeURIComponent(url);
   const encodedTitle = encodeURIComponent(title);
+
   const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
 
   async function handleFacebookShare() {
@@ -169,6 +309,7 @@ function ShareLinks({ title }: { title: string }) {
       >
         <Icon name="facebook" />
       </button>
+
       <a
         className="share x"
         href={`https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`}
@@ -178,6 +319,7 @@ function ShareLinks({ title }: { title: string }) {
       >
         <Icon name="x" />
       </a>
+
       <a
         className="share pinterest"
         href={`https://pinterest.com/pin/create/button/?url=${encodedUrl}&description=${encodedTitle}`}
@@ -187,6 +329,7 @@ function ShareLinks({ title }: { title: string }) {
       >
         <Icon name="pinterest" />
       </a>
+
       <a
         className="share linkedin"
         href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`}
@@ -199,9 +342,11 @@ function ShareLinks({ title }: { title: string }) {
     </div>
   );
 }
+
 export default function RecipeDetail() {
   const { slug } = useParams<{ slug: string }>();
   const { currentUser, isAdmin } = useAuth();
+
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [author, setAuthor] = useState("Tác giả ẩn danh");
   const [comments, setComments] = useState<Comment[]>([]);
@@ -212,44 +357,62 @@ export default function RecipeDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [commentBusy, setCommentBusy] = useState(false);
+
   const [doneIngredients, setDoneIngredients] = useState<Set<number>>(
     () => new Set(),
   );
+
   const [doneSteps, setDoneSteps] = useState<Set<number>>(() => new Set());
+
   function toggleItem(
     setter: (updater: (prev: Set<number>) => Set<number>) => void,
     index: number,
   ) {
     setter((prev) => {
       const next = new Set(prev);
-      if (next.has(index)) next.delete(index);
-      else next.add(index);
+
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+
       return next;
     });
   }
+
   useEffect(() => {
     let alive = true;
+
     async function load() {
       setLoading(true);
       setError("");
       setDoneIngredients(new Set());
       setDoneSteps(new Set());
+
       try {
         const item = await fetchRecipeBySlug(slug);
+
         if (!alive) return;
+
         if (!item) {
           setError("Không tìm thấy công thức.");
           return;
         }
+
         setRecipe(item);
+
         const [commentData, allRecipes, authorName] = await Promise.all([
           fetchComments(item.id),
           fetchRecipes(),
           getAuthorName(item.userId),
         ]);
+
         if (!alive) return;
+
         setComments(commentData);
         setAuthor(authorName);
+
         setRelated(
           allRecipes
             .filter((x) => x.id !== item.id && x.category === item.category)
@@ -265,36 +428,49 @@ export default function RecipeDetail() {
         }
       }
     }
+
     void load();
+
     return () => {
       alive = false;
     };
   }, [slug]);
+
   const embed = useMemo(
     () => youtubeEmbedUrl(recipe?.youtubeUrl),
     [recipe?.youtubeUrl],
   );
+
   const youtubeSourceUrl = useMemo(
     () => getYouTubeSourceUrl(recipe?.youtubeUrl),
     [recipe?.youtubeUrl],
   );
+
   const relatedItems = related.slice((relatedPage - 1) * 3, relatedPage * 3);
+
   const relatedPages = Math.max(1, Math.ceil(related.length / 3));
+
   async function submitComment(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
     if (!recipe || !commentText.trim()) {
       return;
     }
+
     setCommentBusy(true);
+
     try {
       await addRecipeComment(recipe.id, {
         text: commentText.trim(),
+
         // Guests have no account: userId is null and they pick their own name.
         userId: currentUser?.uid,
+
         username: currentUser
           ? currentUser.displayName || "Người dùng ẩn danh"
           : guestName.trim() || "Khách",
       });
+
       setCommentText("");
       setComments(await fetchComments(recipe.id));
     } catch (err) {
@@ -304,9 +480,11 @@ export default function RecipeDetail() {
       setCommentBusy(false);
     }
   }
+
   if (loading) {
     return <LoadingBlock label="Đang mở trang món ngon..." />;
   }
+
   if (error || !recipe) {
     return (
       <div className="mx-auto max-w-2xl">
@@ -314,23 +492,29 @@ export default function RecipeDetail() {
       </div>
     );
   }
+
   const owner = currentUser?.uid && recipe.userId === currentUser.uid;
+
   return (
     <article className="mx-auto max-w-5xl">
       <div className="mb-5 text-sm text-muted">
         <Link href="/" className="hover:text-lacquer">
           {SITE_NAME}
         </Link>
+
         <span className="mx-2">/</span>
+
         <Link
           href={`/?category=${encodeURIComponent(recipe.category)}`}
           className="hover:text-lacquer"
         >
           {categoryLabel(recipe.category)}
         </Link>
+
         <span className="mx-2">/</span>
         <span>{recipe.title}</span>
       </div>
+
       <div className="overflow-hidden rounded-[2rem] border border-border bg-card shadow-[0_18px_70px_rgba(83,43,23,0.1)]">
         <div className="relative aspect-[16/8] bg-cream">
           <RecipeImage
@@ -346,7 +530,9 @@ export default function RecipeDetail() {
               </div>
             }
           />
+
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/5 to-transparent" />
+
           <div className="absolute bottom-5 left-5 right-5">
             <span
               className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold backdrop-blur ${
@@ -355,34 +541,43 @@ export default function RecipeDetail() {
             >
               {categoryLabel(recipe.category)}
             </span>
+
             <h1 className="mt-3 max-w-3xl font-serif text-4xl font-bold leading-tight text-white drop-shadow md:text-5xl">
               {recipe.title}
             </h1>
           </div>
         </div>
+
         <div className="p-5 sm:p-8">
           <div className="grid gap-8 lg:grid-cols-[1fr_290px]">
             <div>
               <p className="text-base leading-8 text-muted">
                 {recipe.description}
               </p>
+
               <div className="mt-5 rounded-2xl bg-cream/70 p-4">
                 <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-                  <Icon name="user" size={16} className="text-lacquer" /> Tác
-                  giả: {author}
+                  <Icon name="user" size={16} className="text-lacquer" />
+                  Tác giả: {author}
                 </div>
               </div>
+
               <div className="mt-7">
                 <h2 className="subheading">
-                  <Icon name="share" size={19} /> Chia sẻ công thức
+                  <Icon name="share" size={19} />
+                  Chia sẻ công thức
                 </h2>
+
                 <ShareLinks title={recipe.title} />
               </div>
+
               {embed && (
                 <section className="mt-8">
                   <h2 className="subheading">
-                    <Icon name="youtube" size={19} /> Video hướng dẫn
+                    <Icon name="youtube" size={19} />
+                    Video hướng dẫn
                   </h2>
+
                   <div className="aspect-video overflow-hidden rounded-2xl border border-border bg-black">
                     <iframe
                       src={embed}
@@ -393,6 +588,7 @@ export default function RecipeDetail() {
                   </div>
                 </section>
               )}
+
               {youtubeSourceUrl && (
                 <section
                   aria-labelledby="recipe-source-heading"
@@ -405,10 +601,12 @@ export default function RecipeDetail() {
                     <Icon name="youtube" size={18} className="text-lacquer" />
                     Nguồn tham khảo
                   </h2>
+
                   <p className="mt-2 text-sm leading-6 text-muted">
-                    Công thức này tham khảo từ video YouTube gốc. Bạn có thể
-                    xem video để đối chiếu nguyên liệu và các bước thực hiện.
+                    Công thức này tham khảo từ video YouTube gốc. Bạn có thể xem
+                    video để đối chiếu nguyên liệu và các bước thực hiện.
                   </p>
+
                   <a
                     href={youtubeSourceUrl}
                     target="_blank"
@@ -417,28 +615,39 @@ export default function RecipeDetail() {
                   >
                     Xem video gốc trên YouTube
                   </a>
+
                   <p className="mt-2 text-xs leading-5 text-muted">
                     Video và nội dung gốc thuộc về chủ sở hữu tương ứng.
                   </p>
                 </section>
               )}
+
+              {/* Ingredients and per-ingredient shopping links */}
               <section className="mt-8">
                 <h2 className="subheading">
-                  <Icon name="list" size={19} /> Nguyên liệu{" "}
+                  <Icon name="list" size={19} />
+                  Nguyên liệu{" "}
                   <span className="text-sm font-sans font-medium text-muted">
                     ({recipe.ingredients.length})
                   </span>
                 </h2>
+
                 <ul className="mt-4 grid gap-x-10 rounded-3xl bg-cream/50 px-5 py-2 sm:grid-cols-2 sm:px-6">
                   {recipe.ingredients.map((item, index) => {
                     const done = doneIngredients.has(index);
+                    const ingredientKeyword = getIngredientKeyword(item);
+
                     return (
-                      <li key={`${item}-${index}`}>
+                      <li
+                        key={`${item}-${index}`}
+                        className="border-b border-dashed border-border py-3"
+                      >
+                        {/* Ingredient checklist */}
                         <button
                           type="button"
                           aria-pressed={done}
                           onClick={() => toggleItem(setDoneIngredients, index)}
-                          className="group flex w-full items-start gap-3 border-b border-dashed border-border py-3 text-left text-sm leading-6 text-ink transition-colors hover:text-lacquer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lacquer"
+                          className="group flex w-full items-start gap-3 text-left text-sm leading-6 text-ink transition-colors hover:text-lacquer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lacquer"
                         >
                           <span
                             aria-hidden
@@ -448,6 +657,7 @@ export default function RecipeDetail() {
                                 : "bg-gold group-hover:scale-150 group-hover:bg-lacquer"
                             }`}
                           />
+
                           <span
                             className={
                               done
@@ -458,19 +668,98 @@ export default function RecipeDetail() {
                             {item}
                           </span>
                         </button>
+
+                        {/* Expand to see retailers and addresses for this ingredient */}
+                        <details className="mt-2 rounded-xl border border-border bg-card px-3 py-2">
+                          <summary className="cursor-pointer py-1 text-xs font-bold text-lacquer">
+                            Tìm nơi mua và địa chỉ
+                          </summary>
+
+                          <div className="mt-3 space-y-2">
+                            {SHOPPING_PLACES.map((place) => (
+                              <div
+                                key={place.name}
+                                className="rounded-xl bg-cream/50 p-3"
+                              >
+                                <a
+                                  href={place.website}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-sm font-bold text-ink hover:text-lacquer"
+                                >
+                                  {place.name}
+                                  <span aria-hidden> ↗</span>
+                                </a>
+
+                                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-2">
+                                  <a
+                                    href={getIngredientSearchUrl(
+                                      ingredientKeyword,
+                                      place.domain,
+                                    )}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs font-semibold text-lacquer underline underline-offset-4"
+                                    aria-label={`Tìm ${ingredientKeyword} tại ${place.name}`}
+                                  >
+                                    Tìm “{ingredientKeyword}”
+                                  </a>
+
+                                  <a
+                                    href={getStoreAddressUrl(place.name)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs font-semibold text-bamboo underline underline-offset-4"
+                                    aria-label={`Xem địa chỉ ${place.name} gần bạn`}
+                                  >
+                                    Xem địa chỉ cửa hàng
+                                  </a>
+                                </div>
+                              </div>
+                            ))}
+
+                            <a
+                              href={getMarketAddressUrl(ingredientKeyword)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 rounded-xl border border-bamboo/20 bg-bamboo/5 p-3 text-xs font-semibold text-bamboo transition hover:bg-bamboo/10"
+                            >
+                              <Icon name="map-pin" size={17} />
+
+                              <span>
+                                Tìm chợ bán {ingredientKeyword} gần bạn
+                              </span>
+
+                              <Icon
+                                name="chevron-right"
+                                size={15}
+                                className="ml-auto shrink-0"
+                              />
+                            </a>
+                          </div>
+
+                          <p className="mt-3 text-xs leading-5 text-muted">
+                            Kết quả tìm kiếm, giá bán, tồn kho và địa chỉ thực
+                            tế cần được xác nhận trên website hoặc bản đồ.
+                          </p>
+                        </details>
                       </li>
                     );
                   })}
                 </ul>
               </section>
+
+              {/* Nutrition */}
               {nutritionRows(recipe.nutrition).length > 0 && (
                 <section className="mt-8">
                   <h2 className="subheading">
-                    <Icon name="list" size={19} /> Dinh dưỡng{" "}
+                    <Icon name="list" size={19} />
+                    Dinh dưỡng{" "}
                     <span className="text-sm font-sans font-medium text-muted">
                       (mỗi khẩu phần)
                     </span>
                   </h2>
+
                   <dl className="mt-4 grid gap-x-10 rounded-3xl bg-cream/50 px-5 py-2 sm:grid-cols-2 sm:px-6">
                     {nutritionRows(recipe.nutrition).map((row) => (
                       <div
@@ -478,20 +767,26 @@ export default function RecipeDetail() {
                         className="flex justify-between border-b border-dashed border-border py-3 text-sm"
                       >
                         <dt className="text-muted">{row.label}</dt>
+
                         <dd className="font-semibold text-ink">{row.value}</dd>
                       </div>
                     ))}
                   </dl>
                 </section>
               )}
+
+              {/* Cooking steps checklist */}
               <section className="mt-8">
                 <h2 className="subheading">
-                  <Icon name="route" size={19} /> Cách làm
+                  <Icon name="route" size={19} />
+                  Cách làm
                 </h2>
+
                 <ul className="mt-5">
                   {recipe.steps.map((item, index) => {
                     const done = doneSteps.has(index);
                     const last = index === recipe.steps.length - 1;
+
                     return (
                       <li key={`${item}-${index}`}>
                         <button
@@ -510,6 +805,7 @@ export default function RecipeDetail() {
                               }`}
                             />
                           )}
+
                           <span
                             aria-hidden
                             className={`absolute left-0 top-[7px] size-3.5 rounded-full border-2 border-lacquer transition-all duration-200 group-hover:ring-4 group-hover:ring-gold/30 ${
@@ -518,6 +814,7 @@ export default function RecipeDetail() {
                                 : "bg-ivory group-hover:bg-gold"
                             }`}
                           />
+
                           <span
                             className={`block text-sm leading-7 transition-colors ${
                               done
@@ -533,13 +830,17 @@ export default function RecipeDetail() {
                   })}
                 </ul>
               </section>
+
+              {/* Comments */}
               <section className="mt-10 border-t border-border pt-8">
                 <h2 className="subheading">
-                  <Icon name="comment" size={19} /> Bình luận{" "}
+                  <Icon name="comment" size={19} />
+                  Bình luận{" "}
                   <span className="text-sm font-sans font-medium text-muted">
                     ({comments.length})
                   </span>
                 </h2>
+
                 {comments.length ? (
                   <div className="mt-4 space-y-3">
                     {comments.map((comment) => (
@@ -551,6 +852,7 @@ export default function RecipeDetail() {
                           <strong className="text-sm text-ink">
                             {comment.username || "Người dùng"}
                           </strong>
+
                           <span
                             className="text-xs text-muted"
                             title={formatCommentDate(comment.createdAt)}
@@ -558,6 +860,7 @@ export default function RecipeDetail() {
                             {formatCommentDate(comment.createdAt)}
                           </span>
                         </div>
+
                         <p className="mt-2 text-sm leading-6 text-muted">
                           {comment.text}
                         </p>
@@ -569,6 +872,7 @@ export default function RecipeDetail() {
                     Chưa có bình luận. Hãy là người đầu tiên góp chuyện!
                   </p>
                 )}
+
                 <div className="mt-5">
                   <form onSubmit={submitComment}>
                     {!currentUser && (
@@ -581,6 +885,7 @@ export default function RecipeDetail() {
                         aria-label="Tên của bạn"
                       />
                     )}
+
                     <textarea
                       value={commentText}
                       onChange={(e) => setCommentText(e.target.value)}
@@ -589,6 +894,7 @@ export default function RecipeDetail() {
                       maxLength={1000}
                       placeholder="Thêm bình luận của bạn..."
                     />
+
                     <button
                       disabled={commentBusy || !commentText.trim()}
                       className="btn-primary mt-3"
@@ -597,7 +903,8 @@ export default function RecipeDetail() {
                         "Đang đăng..."
                       ) : (
                         <>
-                          <Icon name="comment" size={16} /> Đăng bình luận
+                          <Icon name="comment" size={16} />
+                          Đăng bình luận
                         </>
                       )}
                     </button>
@@ -605,25 +912,31 @@ export default function RecipeDetail() {
                 </div>
               </section>
             </div>
+
+            {/* Sidebar */}
             <aside className="space-y-5">
               {(owner || isAdmin) && (
                 <div className="rounded-2xl border border-gold/30 bg-gold/10 p-4">
                   <div className="text-sm font-bold text-lacquer">
                     Quản lý công thức
                   </div>
+
                   <div className="mt-3 flex flex-wrap gap-2">
                     <Link
                       href={`/sua-cong-thuc/${recipe.slug}`}
                       className="btn-secondary"
                     >
-                      <Icon name="edit" size={15} /> Chỉnh sửa
+                      <Icon name="edit" size={15} />
+                      Chỉnh sửa
                     </Link>
                   </div>
                 </div>
               )}
+
               {related.length > 0 && (
                 <div>
                   <h2 className="subheading text-lg">Món cùng danh mục</h2>
+
                   <div className="mt-3 space-y-3">
                     {relatedItems.map((item) => (
                       <Link
@@ -634,28 +947,34 @@ export default function RecipeDetail() {
                         <div className="text-xs font-bold text-muted">
                           {categoryLabel(item.category)}
                         </div>
+
                         <div className="mt-1 font-serif text-lg font-bold text-ink">
                           {item.title}
                         </div>
                       </Link>
                     ))}
                   </div>
+
                   {relatedPages > 1 && (
                     <div className="mt-3 flex justify-between">
                       <button
                         className="page-button"
                         disabled={relatedPage === 1}
                         onClick={() => setRelatedPage((p) => p - 1)}
+                        aria-label="Trang trước"
                       >
                         <Icon name="chevron-left" />
                       </button>
+
                       <span className="self-center text-xs text-muted">
                         {relatedPage} / {relatedPages}
                       </span>
+
                       <button
                         className="page-button"
                         disabled={relatedPage === relatedPages}
                         onClick={() => setRelatedPage((p) => p + 1)}
+                        aria-label="Trang tiếp theo"
                       >
                         <Icon name="chevron-right" />
                       </button>
