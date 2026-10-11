@@ -51,6 +51,16 @@ const SHOPPING_PLACES = [
     website: "https://kingfoodmart.com/",
   },
   {
+    name: "AEON Mart",
+    domain: "aeoneshop.com",
+    website: "https://aeoneshop.com/",
+  },
+  {
+    name: "Emart",
+    domain: "emartmall.com.vn",
+    website: "https://emartmall.com.vn/",
+  },
+  {
     name: "WinMart",
     domain: "winmart.vn",
     website: "https://winmart.vn/",
