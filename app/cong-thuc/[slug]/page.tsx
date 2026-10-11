@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { cache } from "react";
 import RecipeDetail from "@/components/recipes/RecipeDetail";
 import { categoryLabel } from "@/lib/category";
+import { getRecipeYieldSchema } from "@/lib/recipeYield";
 import type { Recipe } from "@/lib/types";
 import { fetchRecipePageServer } from "@/lib/firebase/server";
 import { SITE_NAME, SITE_URL, RECIPE_PATH } from "@/lib/seo";
@@ -153,7 +154,6 @@ type SeoRecipe = Recipe & {
   prepTime?: string;
   cookTime?: string;
   totalTime?: string;
-  recipeYield?: string | number;
 };
 
 function getOptionalString(value: unknown): string | undefined {
@@ -303,7 +303,7 @@ function RecipeJsonLd({ recipe }: { recipe: Recipe }) {
   const prepTime = getOptionalString(seoRecipe.prepTime);
   const cookTime = getOptionalString(seoRecipe.cookTime);
   const totalTime = getOptionalString(seoRecipe.totalTime);
-  const recipeYield = getOptionalString(seoRecipe.recipeYield);
+  const recipeYield = getRecipeYieldSchema(recipe);
   const nutrition = getNutritionSchema(seoRecipe);
   const youtubeUrl = getOptionalString(recipe.youtubeUrl);
 
@@ -328,7 +328,7 @@ function RecipeJsonLd({ recipe }: { recipe: Recipe }) {
     ...(prepTime ? { prepTime } : {}),
     ...(cookTime ? { cookTime } : {}),
     ...(totalTime ? { totalTime } : {}),
-    ...(recipeYield ? { recipeYield } : {}),
+    recipeYield,
     ...(nutrition ? { nutrition } : {}),
     recipeCategory: categoryLabel(recipe.category),
     recipeIngredient: recipe.ingredients.map(cleanText).filter(Boolean),

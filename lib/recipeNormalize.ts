@@ -1,5 +1,6 @@
 import type { Comment, Recipe } from "@/lib/types";
 import { NUTRITION_FIELDS } from "@/lib/nutrition";
+import { normalizeRecipeYield } from "@/lib/recipeYield";
 
 /**
  * Pure (no "use client", no Firebase SDK) normalizers shared by the browser
@@ -69,6 +70,7 @@ export function normalizeRecipe(
     imageUrl: data.imageUrl ? String(data.imageUrl) : undefined,
     youtubeUrl: data.youtubeUrl ? String(data.youtubeUrl) : undefined,
     nutrition: normalizeNutrition(data.nutrition),
+    recipeYield: normalizeRecipeYield(data.recipeYield ?? data.servings),
     userId: data.userId ? String(data.userId) : undefined,
     createdAt: normalizeDate(data.createdAt as Recipe["createdAt"]),
     updatedAt: normalizeDate(data.updatedAt as Recipe["updatedAt"]),

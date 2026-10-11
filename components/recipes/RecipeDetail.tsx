@@ -13,6 +13,7 @@ import { categoryAccent, categoryLabel } from "@/lib/category";
 import { youtubeEmbedUrl } from "@/lib/youtube";
 import RecipeImage from "@/components/recipe/RecipeImage";
 import { nutritionRows } from "@/lib/nutrition";
+import { formatRecipeYield } from "@/lib/recipeYield";
 import { isMobileOrTablet } from "@/lib/device";
 import { SITE_NAME } from "@/lib/seo";
 
@@ -625,10 +626,16 @@ export default function RecipeDetail({
                 {recipe.description}
               </p>
 
-              <div className="mt-5 rounded-2xl bg-cream/70 p-4">
+              <div className="mt-5 space-y-2 rounded-2xl bg-cream/70 p-4">
                 <div className="flex items-center gap-2 text-sm font-semibold text-ink">
                   <Icon name="user" size={16} className="text-lacquer" />
                   Tác giả: {author}
+                </div>
+
+                {/* Mirrors the recipeYield value in the JSON-LD. */}
+                <div className="flex items-center gap-2 text-sm font-semibold text-ink">
+                  <Icon name="bowl" size={16} className="text-lacquer" />
+                  Khẩu phần: {formatRecipeYield(recipe)}
                 </div>
               </div>
 

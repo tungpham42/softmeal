@@ -40,6 +40,8 @@ export interface Recipe {
   imageUrl?: string;
   youtubeUrl?: string;
   nutrition?: RecipeNutrition;
+  /** Servings produced, e.g. "4" or "4 khẩu phần". Falls back to 1 serving. */
+  recipeYield?: string;
   userId?: string;
   createdAt?: string;
   updatedAt?: string;
