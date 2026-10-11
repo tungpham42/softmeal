@@ -88,6 +88,29 @@ function formatCommentDate(createdAt: unknown) {
     hour12: false,
   });
 }
+/**
+ * Accept only secure links that point to YouTube, so a recipe source cannot
+ * accidentally render an unsafe or unrelated external URL.
+ */
+function getYouTubeSourceUrl(url?: string | null): string | null {
+  if (!url) return null;
+
+  try {
+    const parsed = new URL(url);
+    const hostname = parsed.hostname.toLowerCase();
+    const isYouTubeDomain =
+      hostname === "youtube.com" ||
+      hostname.endsWith(".youtube.com") ||
+      hostname === "youtu.be" ||
+      hostname.endsWith(".youtu.be");
+
+    if (parsed.protocol !== "https:" || !isYouTubeDomain) return null;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
 function getLocationHref() {
   return window.location.href;
 }
@@ -251,6 +274,10 @@ export default function RecipeDetail() {
     () => youtubeEmbedUrl(recipe?.youtubeUrl),
     [recipe?.youtubeUrl],
   );
+  const youtubeSourceUrl = useMemo(
+    () => getYouTubeSourceUrl(recipe?.youtubeUrl),
+    [recipe?.youtubeUrl],
+  );
   const relatedItems = related.slice((relatedPage - 1) * 3, relatedPage * 3);
   const relatedPages = Math.max(1, Math.ceil(related.length / 3));
   async function submitComment(e: FormEvent<HTMLFormElement>) {
@@ -364,6 +391,35 @@ export default function RecipeDetail() {
                       allowFullScreen
                     />
                   </div>
+                </section>
+              )}
+              {youtubeSourceUrl && (
+                <section
+                  aria-labelledby="recipe-source-heading"
+                  className="mt-8 rounded-2xl border border-border bg-cream/60 p-4 sm:p-5"
+                >
+                  <h2
+                    id="recipe-source-heading"
+                    className="flex items-center gap-2 font-semibold text-ink"
+                  >
+                    <Icon name="youtube" size={18} className="text-lacquer" />
+                    Nguồn tham khảo
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-muted">
+                    Công thức này tham khảo từ video YouTube gốc. Bạn có thể
+                    xem video để đối chiếu nguyên liệu và các bước thực hiện.
+                  </p>
+                  <a
+                    href={youtubeSourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-lacquer underline underline-offset-4 hover:text-lacquer/80"
+                  >
+                    Xem video gốc trên YouTube
+                  </a>
+                  <p className="mt-2 text-xs leading-5 text-muted">
+                    Video và nội dung gốc thuộc về chủ sở hữu tương ứng.
+                  </p>
                 </section>
               )}
               <section className="mt-8">
