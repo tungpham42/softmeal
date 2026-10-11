@@ -1,26 +1,14 @@
 "use client";
 
 import type { FormEvent } from "react";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import type { Comment, Recipe } from "@/lib/types";
-import {
-  addRecipeComment,
-  fetchComments,
-  fetchRecipeBySlug,
-  fetchRecipes,
-  getAuthorName,
-} from "@/lib/firebase/data";
+import type { Comment } from "@/lib/types";
+import { addRecipeComment } from "@/lib/firebase/data";
+import type { RecipePageData } from "@/lib/firebase/server";
 import { useAuth } from "@/components/auth/AuthProvider";
 import Icon from "@/components/ui/Icon";
-import Alert, { LoadingBlock } from "@/components/ui/Alert";
+import Alert from "@/components/ui/Alert";
 import { categoryAccent, categoryLabel } from "@/lib/category";
 import { youtubeEmbedUrl } from "@/lib/youtube";
 import RecipeImage from "@/components/recipe/RecipeImage";
@@ -354,152 +342,144 @@ function ShareLinks({ title }: { title: string }) {
   );
 }
 
-function ShoppingModal({
-  ingredient,
-  onClose,
-}: {
-  ingredient: string;
-  onClose: () => void;
-}) {
-  const keyword = getIngredientKeyword(ingredient);
+/**
+ * Shopping, with the fewest possible steps:
+ *  - pick a retailer ONCE for the whole recipe,
+ *  - every ingredient then has a single direct link to that retailer,
+ *  - one button copies the whole shopping list.
+ * (Previously: open a modal per ingredient -> pick a retailer -> open a
+ * Google search in a new tab.)
+ */
+function ShoppingPanel({ ingredients }: { ingredients: string[] }) {
+  const [placeIndex, setPlaceIndex] = useState(0);
+  const [copied, setCopied] = useState(false);
+  const place = SHOPPING_PLACES[placeIndex];
 
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+  const keywords = useMemo(
+    () => ingredients.map((item) => getIngredientKeyword(item)),
+    [ingredients],
+  );
+
+  async function copyList() {
+    try {
+      await navigator.clipboard.writeText(
+        ingredients.map((item) => `- ${item}`).join("\n"),
+      );
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard unavailable (insecure context / denied): ignore silently.
     }
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [onClose]);
+  }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 backdrop-blur-sm sm:items-center sm:p-4"
-      onClick={onClose}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="shopping-modal-title"
-        onClick={(e) => e.stopPropagation()}
-        className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-border bg-card shadow-[0_18px_70px_rgba(83,43,23,0.25)] sm:rounded-3xl"
-      >
-        <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
-          <div>
-            <h2
-              id="shopping-modal-title"
-              className="font-serif text-xl font-bold text-ink"
-            >
-              Tìm nơi mua và địa chỉ
-            </h2>
+    <div className="mt-4 rounded-2xl border border-border bg-card p-3 sm:p-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-bold text-muted">Mua tại:</span>
 
-            <p className="mt-1 text-sm text-muted">
-              Nguyên liệu: <strong className="text-ink">{keyword}</strong>
-            </p>
-          </div>
-
+        {SHOPPING_PLACES.map((item, index) => (
           <button
+            key={item.name}
             type="button"
-            autoFocus
-            onClick={onClose}
-            aria-label="Đóng"
-            className="grid size-9 shrink-0 place-items-center rounded-full text-muted transition hover:bg-cream hover:text-lacquer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lacquer"
+            aria-pressed={index === placeIndex}
+            onClick={() => setPlaceIndex(index)}
+            className={`rounded-full border px-3 py-1 text-xs font-bold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lacquer ${
+              index === placeIndex
+                ? "border-lacquer bg-lacquer text-white"
+                : "border-border bg-cream/60 text-ink hover:bg-cream"
+            }`}
           >
-            <Icon name="close" size={18} />
+            {item.name}
           </button>
-        </div>
-
-        <div className="space-y-2 overflow-y-auto px-5 py-4">
-          {SHOPPING_PLACES.map((place) => (
-            <div key={place.name} className="rounded-xl bg-cream/50 p-3">
-              <a
-                href={place.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-sm font-bold text-ink hover:text-lacquer"
-              >
-                {place.name}
-                <Icon name="external-link" size={13} />
-              </a>
-
-              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-2">
-                <a
-                  href={getIngredientSearchUrl(keyword, place.domain)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs font-semibold text-lacquer underline underline-offset-4"
-                  aria-label={`Tìm ${keyword} tại ${place.name}`}
-                >
-                  Tìm “{keyword}”
-                </a>
-
-                <a
-                  href={getStoreAddressUrl(place.name)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs font-semibold text-bamboo underline underline-offset-4"
-                  aria-label={`Xem địa chỉ ${place.name} gần bạn`}
-                >
-                  Xem địa chỉ cửa hàng
-                </a>
-              </div>
-            </div>
-          ))}
-
-          <a
-            href={getMarketAddressUrl(keyword)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 rounded-xl border border-bamboo/20 bg-bamboo/5 p-3 text-xs font-semibold text-bamboo transition hover:bg-bamboo/10"
-          >
-            <Icon name="map-pin" size={17} />
-
-            <span>Tìm chợ bán {keyword} gần bạn</span>
-
-            <Icon name="chevron-right" size={15} className="ml-auto shrink-0" />
-          </a>
-
-          <p className="pt-2 text-xs leading-5 text-muted">
-            Kết quả tìm kiếm, giá bán, tồn kho và địa chỉ thực tế cần được xác
-            nhận trên website hoặc bản đồ.
-          </p>
-        </div>
+        ))}
       </div>
+
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs font-semibold">
+        <a
+          href={getStoreAddressUrl(place.name)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-bamboo underline underline-offset-4"
+        >
+          <Icon name="map-pin" size={13} />
+          Cửa hàng {place.name} gần bạn
+        </a>
+
+        <a
+          href={getMarketAddressUrl()}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-bamboo underline underline-offset-4"
+        >
+          <Icon name="map-pin" size={13} />
+          Chợ gần bạn
+        </a>
+
+        <button
+          type="button"
+          onClick={copyList}
+          className="inline-flex items-center gap-1 text-lacquer underline underline-offset-4"
+        >
+          {copied ? "Đã sao chép danh sách" : "Sao chép danh sách đi chợ"}
+        </button>
+      </div>
+
+      <ul className="mt-2 divide-y divide-dashed divide-border">
+        {ingredients.map((item, index) => (
+          <li
+            key={`${item}-${index}`}
+            className="flex items-center justify-between gap-3 py-2 text-sm"
+          >
+            <span className="text-ink">{item}</span>
+
+            <a
+              href={getIngredientSearchUrl(keywords[index], place.domain)}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Tìm ${keywords[index]} tại ${place.name}`}
+              className="shrink-0 rounded-lg border border-border bg-cream/50 px-2.5 py-1 text-xs font-bold text-lacquer transition hover:bg-cream"
+            >
+              Xem giá
+            </a>
+          </li>
+        ))}
+      </ul>
+
+      <p className="pt-2 text-xs leading-5 text-muted">
+        Giá bán, tồn kho và địa chỉ thực tế cần được xác nhận trên website hoặc
+        bản đồ.
+      </p>
     </div>
   );
 }
 
-export default function RecipeDetail() {
-  const { slug } = useParams<{ slug: string }>();
+export default function RecipeDetail({
+  initialData,
+}: {
+  initialData: RecipePageData | null;
+}) {
   const { currentUser, isAdmin } = useAuth();
 
-  const [recipe, setRecipe] = useState<Recipe | null>(null);
-  const [author, setAuthor] = useState("Tác giả ẩn danh");
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [related, setRelated] = useState<Recipe[]>([]);
+  // Everything arrives pre-fetched from the server page: no spinner, no
+  // client-side fetch waterfall.
+  const recipe = initialData?.recipe ?? null;
+  const author = initialData?.author ?? "Tác giả ẩn danh";
+  const related = initialData?.related ?? [];
+
+  const [comments, setComments] = useState<Comment[]>(
+    initialData?.comments ?? [],
+  );
   const [commentText, setCommentText] = useState("");
   const [guestName, setGuestName] = useState("");
   const [relatedPage, setRelatedPage] = useState(1);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [commentBusy, setCommentBusy] = useState(false);
-  const [shoppingIngredient, setShoppingIngredient] = useState<string | null>(
-    null,
-  );
 
   const [doneIngredients, setDoneIngredients] = useState<Set<number>>(
     () => new Set(),
   );
 
   const [doneSteps, setDoneSteps] = useState<Set<number>>(() => new Set());
-
-  const closeShoppingModal = useCallback(() => setShoppingIngredient(null), []);
 
   function toggleItem(
     setter: (updater: (prev: Set<number>) => Set<number>) => void,
@@ -517,61 +497,6 @@ export default function RecipeDetail() {
       return next;
     });
   }
-
-  useEffect(() => {
-    let alive = true;
-
-    async function load() {
-      setLoading(true);
-      setError("");
-      setDoneIngredients(new Set());
-      setDoneSteps(new Set());
-
-      try {
-        const item = await fetchRecipeBySlug(slug);
-
-        if (!alive) return;
-
-        if (!item) {
-          setError("Không tìm thấy công thức.");
-          return;
-        }
-
-        setRecipe(item);
-
-        const [commentData, allRecipes, authorName] = await Promise.all([
-          fetchComments(item.id),
-          fetchRecipes(),
-          getAuthorName(item.userId),
-        ]);
-
-        if (!alive) return;
-
-        setComments(commentData);
-        setAuthor(authorName);
-
-        setRelated(
-          allRecipes
-            .filter((x) => x.id !== item.id && x.category === item.category)
-            .slice(0, 12),
-        );
-      } catch {
-        if (alive) {
-          setError("Không thể tải công thức. Vui lòng thử lại.");
-        }
-      } finally {
-        if (alive) {
-          setLoading(false);
-        }
-      }
-    }
-
-    void load();
-
-    return () => {
-      alive = false;
-    };
-  }, [slug]);
 
   const embed = useMemo(
     () => youtubeEmbedUrl(recipe?.youtubeUrl),
@@ -597,19 +522,31 @@ export default function RecipeDetail() {
     setCommentBusy(true);
 
     try {
-      await addRecipeComment(recipe.id, {
-        text: commentText.trim(),
+      const text = commentText.trim();
 
-        // Guests have no account: userId is null and they pick their own name.
+      const username = currentUser
+        ? currentUser.displayName || "Người dùng ẩn danh"
+        : guestName.trim() || "Khách";
+
+      // Guests have no account: userId is null and they pick their own name.
+      const saved = await addRecipeComment(recipe.id, {
+        text,
         userId: currentUser?.uid,
-
-        username: currentUser
-          ? currentUser.displayName || "Người dùng ẩn danh"
-          : guestName.trim() || "Khách",
+        username,
       });
 
+      // Append locally instead of re-downloading the whole comment list.
+      setComments((prev) => [
+        {
+          id: saved.id,
+          text,
+          userId: currentUser?.uid,
+          username,
+          createdAt: saved.createdAt,
+        },
+        ...prev,
+      ]);
       setCommentText("");
-      setComments(await fetchComments(recipe.id));
     } catch (err) {
       console.error("Comment error:", err);
       setError("Không thể đăng bình luận.");
@@ -618,14 +555,10 @@ export default function RecipeDetail() {
     }
   }
 
-  if (loading) {
-    return <LoadingBlock label="Đang mở trang món ngon..." />;
-  }
-
-  if (error || !recipe) {
+  if (!recipe) {
     return (
       <div className="mx-auto max-w-2xl">
-        <Alert tone="warning">{error || "Không tìm thấy công thức."}</Alert>
+        <Alert tone="warning">Không tìm thấy công thức.</Alert>
       </div>
     );
   }
@@ -804,21 +737,12 @@ export default function RecipeDetail() {
                             {item}
                           </span>
                         </button>
-
-                        {/* Open a modal with retailers and addresses for this ingredient */}
-                        <button
-                          type="button"
-                          onClick={() => setShoppingIngredient(item)}
-                          aria-haspopup="dialog"
-                          className="mt-2 inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-bold text-lacquer transition hover:bg-cream focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lacquer"
-                        >
-                          <Icon name="map-pin" size={14} />
-                          Tìm nơi mua và địa chỉ
-                        </button>
                       </li>
                     );
                   })}
                 </ul>
+
+                <ShoppingPanel ingredients={recipe.ingredients} />
               </section>
 
               {/* Nutrition */}
@@ -946,6 +870,12 @@ export default function RecipeDetail() {
                 )}
 
                 <div className="mt-5">
+                  {error && (
+                    <div className="mb-3">
+                      <Alert tone="warning">{error}</Alert>
+                    </div>
+                  )}
+
                   <form onSubmit={submitComment}>
                     {!currentUser && (
                       <input
@@ -1058,13 +988,6 @@ export default function RecipeDetail() {
           </div>
         </div>
       </div>
-
-      {shoppingIngredient !== null && (
-        <ShoppingModal
-          ingredient={shoppingIngredient}
-          onClose={closeShoppingModal}
-        />
-      )}
     </article>
   );
 }

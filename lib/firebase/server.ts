@@ -2,7 +2,12 @@ import "server-only";
 
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
-import type { Recipe } from "@/lib/types";
+import type { Comment, Recipe } from "@/lib/types";
+import {
+  normalizeComment,
+  normalizeRecipe,
+  sortCommentsNewestFirst,
+} from "@/lib/recipeNormalize";
 
 function getFirebaseAdminApp() {
   const apps = getApps();
@@ -53,13 +58,7 @@ function getDb() {
  */
 export async function fetchRecipesServer(): Promise<Recipe[]> {
   const snapshot = await getDb().collection("recipes").get();
-  return snapshot.docs.map((doc) => {
-    const data = doc.data();
-    return {
-      ...data,
-      id: doc.id,
-    } as Recipe;
-  });
+  return snapshot.docs.map((doc) => normalizeRecipe(doc.id, doc.data()));
 }
 
 export async function fetchRecipeBySlugServer(
@@ -76,10 +75,60 @@ export async function fetchRecipeBySlugServer(
   }
 
   const document = snapshot.docs[0];
-  const data = document.data();
+
+  return normalizeRecipe(document.id, document.data());
+}
+
+export type RecipePageData = {
+  recipe: Recipe;
+  author: string;
+  comments: Comment[];
+  related: Recipe[];
+};
+
+const ANONYMOUS_AUTHOR = "Tác giả ẩn danh";
+
+/**
+ * Everything the recipe detail page needs, in ONE server round trip:
+ * recipe -> (comments | author | same-category recipes) in parallel.
+ * Only same-category recipes are queried, instead of downloading the whole
+ * collection in the browser just to filter it.
+ */
+export async function fetchRecipePageServer(
+  slug: string,
+): Promise<RecipePageData | null> {
+  const db = getDb();
+  const recipe = await fetchRecipeBySlugServer(slug);
+
+  if (!recipe) {
+    return null;
+  }
+
+  const [commentsSnap, authorSnap, relatedSnap] = await Promise.all([
+    db.collection("recipes").doc(recipe.id).collection("comments").get(),
+    recipe.userId
+      ? db.collection("users").doc(recipe.userId).get()
+      : Promise.resolve(null),
+    db
+      .collection("recipes")
+      .where("category", "==", recipe.category)
+      .limit(13)
+      .get(),
+  ]);
+
+  const profile = authorSnap?.exists ? authorSnap.data() : undefined;
 
   return {
-    ...data,
-    id: document.id,
-  } as Recipe;
+    recipe,
+    author: String(
+      profile?.username ?? profile?.displayName ?? ANONYMOUS_AUTHOR,
+    ),
+    comments: sortCommentsNewestFirst(
+      commentsSnap.docs.map((d) => normalizeComment(d.id, d.data())),
+    ),
+    related: relatedSnap.docs
+      .filter((d) => d.id !== recipe.id)
+      .slice(0, 12)
+      .map((d) => normalizeRecipe(d.id, d.data())),
+  };
 }

@@ -3,10 +3,11 @@ import { cache } from "react";
 import RecipeDetail from "@/components/recipes/RecipeDetail";
 import { categoryLabel } from "@/lib/category";
 import type { Recipe } from "@/lib/types";
-import { fetchRecipeBySlugServer } from "@/lib/firebase/server";
+import { fetchRecipePageServer } from "@/lib/firebase/server";
 import { SITE_NAME, SITE_URL, RECIPE_PATH } from "@/lib/seo";
 
-const getRecipeBySlug = cache((slug: string) => fetchRecipeBySlugServer(slug));
+// One cached server fetch shared by generateMetadata, JSON-LD and the UI.
+const getRecipePage = cache((slug: string) => fetchRecipePageServer(slug));
 
 type RecipePageProps = {
   params: Promise<{ slug: string }>;
@@ -75,7 +76,7 @@ export async function generateMetadata({
   params,
 }: RecipePageProps): Promise<Metadata> {
   const { slug } = await params;
-  const recipe = await getRecipeBySlug(slug);
+  const recipe = (await getRecipePage(slug))?.recipe;
 
   if (!recipe) {
     return {
@@ -368,12 +369,12 @@ function RecipeJsonLd({ recipe }: { recipe: Recipe }) {
 
 export default async function RecipePage({ params }: RecipePageProps) {
   const { slug } = await params;
-  const recipe = await getRecipeBySlug(slug);
+  const data = await getRecipePage(slug);
 
   return (
     <>
-      {recipe ? <RecipeJsonLd recipe={recipe} /> : null}
-      <RecipeDetail />
+      {data ? <RecipeJsonLd recipe={data.recipe} /> : null}
+      <RecipeDetail initialData={data} />
     </>
   );
 }
