@@ -60,6 +60,11 @@ const SHOPPING_PLACES = [
     domain: "winmart.vn",
     website: "https://winmart.vn/",
   },
+  {
+    name: "Ba Sạch",
+    domain: "3sach.vn",
+    website: "https://3sach.vn/",
+  },
 ] as const;
 
 /**
