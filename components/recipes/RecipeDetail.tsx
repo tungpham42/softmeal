@@ -261,6 +261,37 @@ function getLocationHref() {
   return window.location.href;
 }
 
+type ShareTarget = {
+  key: "facebook" | "threads" | "x" | "linkedin";
+  label: string;
+  /** Builds the web share-intent URL for this network. */
+  href: (encodedUrl: string, encodedTitle: string) => string;
+};
+
+/** Order here is the order the buttons are rendered in. */
+const SHARE_TARGETS: readonly ShareTarget[] = [
+  {
+    key: "facebook",
+    label: "Facebook",
+    href: (u) => `https://www.facebook.com/sharer/sharer.php?u=${u}`,
+  },
+  {
+    key: "threads",
+    label: "Threads",
+    href: (u, t) => `https://www.threads.net/intent/post?text=${t}&url=${u}`,
+  },
+  {
+    key: "x",
+    label: "X",
+    href: (u, t) => `https://twitter.com/intent/tweet?url=${u}&text=${t}`,
+  },
+  {
+    key: "linkedin",
+    label: "LinkedIn",
+    href: (u) => `https://www.linkedin.com/sharing/share-offsite/?url=${u}`,
+  },
+];
+
 function ShareLinks({ title }: { title: string }) {
   const url = useSyncExternalStore(
     subscribeToLocation,
@@ -273,9 +304,11 @@ function ShareLinks({ title }: { title: string }) {
   const encodedUrl = encodeURIComponent(url);
   const encodedTitle = encodeURIComponent(title);
 
-  const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
-
-  async function handleFacebookShare() {
+  /**
+   * On phones/tablets, try the native share sheet first (it covers Facebook,
+   * Threads, etc.); otherwise open the network's web share page.
+   */
+  async function handleNativeShare(webShareUrl: string) {
     const shareData: ShareData = {
       title,
       text: title,
@@ -306,49 +339,43 @@ function ShareLinks({ title }: { title: string }) {
     }
 
     // PC / Laptop or unsupported Web Share API.
-    window.open(facebookShareUrl, "_blank", "noopener,noreferrer");
+    window.open(webShareUrl, "_blank", "noopener,noreferrer");
   }
 
   return (
     <div className="flex flex-wrap gap-2">
-      <button
-        type="button"
-        className="share facebook"
-        onClick={handleFacebookShare}
-        aria-label="Chia sẻ Facebook"
-      >
-        <Icon name="facebook" />
-      </button>
+      {SHARE_TARGETS.map((target) => {
+        const href = target.href(encodedUrl, encodedTitle);
+        const label = `Chia sẻ ${target.label}`;
 
-      <a
-        className="share x"
-        href={`https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Chia sẻ X"
-      >
-        <Icon name="x" />
-      </a>
+        // Facebook keeps the native share sheet on mobile/tablet.
+        if (target.key === "facebook") {
+          return (
+            <button
+              key={target.key}
+              type="button"
+              className={`share ${target.key}`}
+              onClick={() => handleNativeShare(href)}
+              aria-label={label}
+            >
+              <Icon name={target.key} />
+            </button>
+          );
+        }
 
-      <a
-        className="share pinterest"
-        href={`https://pinterest.com/pin/create/button/?url=${encodedUrl}&description=${encodedTitle}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Chia sẻ Pinterest"
-      >
-        <Icon name="pinterest" />
-      </a>
-
-      <a
-        className="share linkedin"
-        href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Chia sẻ LinkedIn"
-      >
-        <Icon name="linkedin" />
-      </a>
+        return (
+          <a
+            key={target.key}
+            className={`share ${target.key}`}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={label}
+          >
+            <Icon name={target.key} />
+          </a>
+        );
+      })}
     </div>
   );
 }
