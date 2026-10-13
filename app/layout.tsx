@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Script from "next/script";
-import { Fraunces, Quicksand } from "next/font/google";
+import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 import { GoogleAnalytics, GoogleTagManager } from "@next/third-parties/google";
 import "./globals.css";
 import "@/styles/themed-select.css";
@@ -20,10 +20,10 @@ const fraunces = Fraunces({
   variable: "--font-fraunces",
 });
 
-const quicksand = Quicksand({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin", "vietnamese"],
   display: "swap",
-  variable: "--font-quicksand",
+  variable: "--font-plus-jakarta-sans",
 });
 
 export const metadata: Metadata = {
@@ -61,7 +61,7 @@ export default function RootLayout({
   return (
     <html
       lang="vi"
-      className={`${fraunces.variable} ${quicksand.variable}`}
+      className={`${fraunces.variable} ${plusJakartaSans.variable}`}
       suppressHydrationWarning
     >
       <body suppressHydrationWarning>
