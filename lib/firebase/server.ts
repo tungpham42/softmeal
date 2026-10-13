@@ -1,7 +1,7 @@
 import "server-only";
 
 import { cert, getApps, initializeApp } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import type { Comment, Recipe } from "@/lib/types";
 import {
   normalizeComment,
@@ -77,6 +77,27 @@ export async function fetchRecipeBySlugServer(
   const document = snapshot.docs[0];
 
   return normalizeRecipe(document.id, document.data());
+}
+
+/**
+ * Atomically add one view to a recipe and return the new total.
+ * Runs with the Admin SDK, so it does not depend on Firestore client rules.
+ */
+export async function incrementRecipeViewsServer(
+  recipeId: string,
+): Promise<number | null> {
+  const ref = getDb().collection("recipes").doc(recipeId);
+
+  try {
+    await ref.update({ views: FieldValue.increment(1) });
+  } catch {
+    // Missing recipe (or write failure): nothing to count.
+    return null;
+  }
+
+  const snapshot = await ref.get();
+  const views = Number(snapshot.data()?.views);
+  return Number.isFinite(views) ? views : null;
 }
 
 export type RecipePageData = {

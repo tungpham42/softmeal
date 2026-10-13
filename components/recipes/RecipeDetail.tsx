@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import type { Comment } from "@/lib/types";
 import { addRecipeComment } from "@/lib/firebase/data";
@@ -518,6 +518,43 @@ export default function RecipeDetail({
   );
 
   const [doneSteps, setDoneSteps] = useState<Set<number>>(() => new Set());
+  const [views, setViews] = useState(recipe?.views ?? 0);
+
+  // Count one view per recipe per browser session (reloads don't inflate it),
+  // then show the fresh total returned by the server.
+  const recipeId = recipe?.id;
+  useEffect(() => {
+    if (!recipeId) return;
+
+    const storageKey = `recipe-viewed:${recipeId}`;
+    try {
+      if (window.sessionStorage.getItem(storageKey)) return;
+    } catch {
+      // Storage blocked: fall through and count the view.
+    }
+
+    const controller = new AbortController();
+
+    fetch(`/api/recipes/${encodeURIComponent(recipeId)}/view`, {
+      method: "POST",
+      signal: controller.signal,
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: { views?: number } | null) => {
+        if (typeof data?.views !== "number") return;
+        setViews(data.views);
+        try {
+          window.sessionStorage.setItem(storageKey, "1");
+        } catch {
+          // Ignore: the view is already counted.
+        }
+      })
+      .catch(() => {
+        // Network error or aborted: the view count is non-critical.
+      });
+
+    return () => controller.abort();
+  }, [recipeId]);
 
   function toggleItem(
     setter: (updater: (prev: Set<number>) => Set<number>) => void,
@@ -673,6 +710,10 @@ export default function RecipeDetail({
                 <div className="flex items-center gap-2 text-sm font-semibold text-ink">
                   <Icon name="bowl" size={16} className="text-lacquer" />
                   Khẩu phần: {formatRecipeYield(recipe)}
+                </div>
+                <div className="flex items-center gap-2 text-sm font-semibold text-ink">
+                  <Icon name="eye" size={16} className="text-lacquer" />
+                  Lượt xem: {views.toLocaleString("vi-VN")}
                 </div>
               </div>
 

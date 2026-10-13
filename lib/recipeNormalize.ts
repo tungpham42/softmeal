@@ -53,6 +53,11 @@ function normalizeNutrition(value: unknown): Recipe["nutrition"] {
   return Object.keys(result).length > 0 ? result : undefined;
 }
 
+function normalizeViews(value: unknown): number {
+  const views = Number(value);
+  return Number.isFinite(views) && views > 0 ? Math.floor(views) : 0;
+}
+
 export function normalizeRecipe(
   id: string,
   data: Record<string, unknown>,
@@ -72,6 +77,7 @@ export function normalizeRecipe(
     nutrition: normalizeNutrition(data.nutrition),
     recipeYield: normalizeRecipeYield(data.recipeYield ?? data.servings),
     userId: data.userId ? String(data.userId) : undefined,
+    views: normalizeViews(data.views),
     createdAt: normalizeDate(data.createdAt as Recipe["createdAt"]),
     updatedAt: normalizeDate(data.updatedAt as Recipe["updatedAt"]),
   };

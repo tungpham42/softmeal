@@ -43,6 +43,8 @@ export interface Recipe {
   /** Servings produced, e.g. "4" or "4 khẩu phần". Falls back to 1 serving. */
   recipeYield?: string;
   userId?: string;
+  /** Number of times the recipe page has been viewed. Missing = 0. */
+  views?: number;
   createdAt?: string;
   updatedAt?: string;
 }
