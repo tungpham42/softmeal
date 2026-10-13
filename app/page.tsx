@@ -69,8 +69,12 @@ export default function HomePage() {
             </Link>
             <Link
               href="/them"
-              className="group relative inline-flex items-center justify-center gap-3 rounded-full border-2 border-ivory/60 bg-ivory/10 py-3.5 pl-7 pr-3.5 text-base font-extrabold text-ivory shadow-[0_8px_24px_-8px_rgba(0,0,0,0.45)] backdrop-blur-md transition duration-300 hover:-translate-y-0.5 hover:border-ivory hover:bg-ivory hover:text-lacquer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ivory/50 active:translate-y-0 active:scale-[0.98]"
+              className="group relative inline-flex items-center justify-center gap-3 overflow-hidden rounded-full border-2 border-ivory/60 bg-ivory/10 py-3.5 pl-7 pr-3.5 text-base font-extrabold text-ivory shadow-[0_8px_24px_-8px_rgba(0,0,0,0.45)] backdrop-blur-md transition duration-300 hover:-translate-y-0.5 hover:border-ivory hover:bg-ivory hover:text-lacquer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ivory/50 active:translate-y-0 active:scale-[0.98]"
             >
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 -skew-x-12 bg-white/50 blur-md motion-safe:transition-transform motion-safe:duration-700 motion-safe:group-hover:translate-x-[420%]"
+              />
               <span>Chia sẻ món nhà</span>
               <span className="grid size-9 place-items-center rounded-full bg-gold text-lacquer transition duration-300 group-hover:rotate-90 group-hover:bg-lacquer group-hover:text-gold-light">
                 <Icon name="plus" size={18} />
