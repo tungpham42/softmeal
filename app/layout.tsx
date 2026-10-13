@@ -5,6 +5,8 @@ import { Fraunces } from "next/font/google";
 import { GoogleAnalytics, GoogleTagManager } from "@next/third-parties/google";
 import "./globals.css";
 import "@/styles/themed-select.css";
+import TopAdBanner from "@/components/site/TopAdBanner";
+import { ADSENSE_CLIENT_ID } from "@/lib/adsense";
 import Header from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
 import BackToTop from "@/components/site/BackToTop";
@@ -58,10 +60,11 @@ export default function RootLayout({
           async
           strategy="afterInteractive"
           crossOrigin="anonymous"
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID}`}
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`}
         />
         <AuthProvider>
           <AlpineProvider />
+          <TopAdBanner />
           <Header />
           <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
             {children}

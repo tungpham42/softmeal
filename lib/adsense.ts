@@ -1,0 +1,4 @@
+export const ADSENSE_CLIENT_ID =
+  process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || "ca-pub-3585118770961536";
+
+export const ADSENSE_TOP_SLOT = "2550610826";
