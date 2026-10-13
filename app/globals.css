@@ -15,14 +15,14 @@
   --color-turmeric-700: #986318;
   --color-bamboo: #356947;
   --color-plum: #76505c;
-  --font-sans:
-    "Trebuchet MS", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
 }
 
 /* Fraunces is loaded via next/font in layout.tsx (exposes --font-fraunces). */
 @theme inline {
   --font-serif: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  --font-sans:
+    var(--font-quicksand), "Trebuchet MS", system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 :root {
