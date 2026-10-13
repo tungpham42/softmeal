@@ -17,11 +17,11 @@
   --color-plum: #76505c;
 }
 
-/* Fraunces is loaded via next/font in layout.tsx (exposes --font-fraunces). */
+/* Merriweather is loaded via next/font in layout.tsx (exposes --font-merriweather). */
 @theme inline {
-  --font-serif: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  --font-serif: var(--font-merriweather), Georgia, "Times New Roman", serif;
   --font-sans:
-    var(--font-plus-jakarta-sans), "Trebuchet MS", system-ui, -apple-system,
+    var(--font-montserrat), "Trebuchet MS", system-ui, -apple-system,
     BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 

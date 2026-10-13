@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Script from "next/script";
-import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
+import { Merriweather, Montserrat } from "next/font/google";
 import { GoogleAnalytics, GoogleTagManager } from "@next/third-parties/google";
 import "./globals.css";
 import "@/styles/themed-select.css";
@@ -14,16 +14,16 @@ import AlpineProvider from "@/components/site/AlpineProvider";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { SITE_NAME } from "@/lib/seo";
 
-const fraunces = Fraunces({
+const merriweather = Merriweather({
   subsets: ["latin", "vietnamese"],
   display: "swap",
-  variable: "--font-fraunces",
+  variable: "--font-merriweather",
 });
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const montserrat = Montserrat({
   subsets: ["latin", "vietnamese"],
   display: "swap",
-  variable: "--font-plus-jakarta-sans",
+  variable: "--font-montserrat",
 });
 
 export const metadata: Metadata = {
@@ -61,7 +61,7 @@ export default function RootLayout({
   return (
     <html
       lang="vi"
-      className={`${fraunces.variable} ${plusJakartaSans.variable}`}
+      className={`${merriweather.variable} ${montserrat.variable}`}
       suppressHydrationWarning
     >
       <body suppressHydrationWarning>
