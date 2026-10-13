@@ -188,7 +188,7 @@ export default function Header() {
 
         <div
           {...({ "x-show": "open", "x-cloak": "" } as const)}
-          className="border-t border-ivory/10 py-3 lg:hidden"
+          className="border-t border-ivory/10 py-3 lg:hidden max-h-[calc(100vh-75px)] overflow-y-auto"
         >
           <nav className="grid gap-1" aria-label="Điều hướng di động">
             {navItems.map(([href, label, icon]) => (
