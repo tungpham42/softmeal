@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Script from "next/script";
+import { Fraunces } from "next/font/google";
 import { GoogleAnalytics, GoogleTagManager } from "@next/third-parties/google";
 import "./globals.css";
 import "@/styles/themed-select.css";
@@ -10,6 +11,12 @@ import BackToTop from "@/components/site/BackToTop";
 import AlpineProvider from "@/components/site/AlpineProvider";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { SITE_NAME } from "@/lib/seo";
+
+const fraunces = Fraunces({
+  subsets: ["latin", "vietnamese"],
+  display: "swap",
+  variable: "--font-fraunces",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -44,7 +51,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="vi" suppressHydrationWarning>
+    <html lang="vi" className={fraunces.variable} suppressHydrationWarning>
       <body suppressHydrationWarning>
         <Script
           id="adsense-script"
