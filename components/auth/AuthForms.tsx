@@ -45,6 +45,7 @@ function AuthCard({ mode }: { mode: "login" | "register" }) {
         await createOrUpdateUser(credential.user, {
           username: username.trim(),
           authProvider: "email",
+          isNewUser: true,
         });
       } else {
         const credential = await signInWithEmailAndPassword(

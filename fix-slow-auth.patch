@@ -1,0 +1,77 @@
+diff --git a/components/auth/AuthForms.tsx b/components/auth/AuthForms.tsx
+index 3ee030c..52f042a 100644
+--- a/components/auth/AuthForms.tsx
++++ b/components/auth/AuthForms.tsx
+@@ -45,6 +45,7 @@ function AuthCard({ mode }: { mode: "login" | "register" }) {
+         await createOrUpdateUser(credential.user, {
+           username: username.trim(),
+           authProvider: "email",
++          isNewUser: true,
+         });
+       } else {
+         const credential = await signInWithEmailAndPassword(
+diff --git a/lib/firebase/data.ts b/lib/firebase/data.ts
+index 09fdc63..dde683f 100644
+--- a/lib/firebase/data.ts
++++ b/lib/firebase/data.ts
+@@ -98,29 +98,43 @@ export async function updateCommentsForUsername(
+   username: string,
+ ) {
+   const recipesSnapshot = await getDocs(collection(db, "recipes"));
+-  const jobs: Promise<unknown>[] = [];
+-  for (const recipeDoc of recipesSnapshot.docs) {
+-    const commentsSnapshot = await getDocs(
+-      query(
+-        collection(db, "recipes", recipeDoc.id, "comments"),
+-        where("userId", "==", userId),
+-      ),
+-    );
+-    for (const comment of commentsSnapshot.docs) {
+-      jobs.push(updateDoc(comment.ref, { username }));
+-    }
+-  }
+-  await Promise.all(jobs);
+-  return jobs.length;
++  // Query every recipe's comments in parallel instead of one by one.
++  const perRecipe = await Promise.all(
++    recipesSnapshot.docs.map(async (recipeDoc) => {
++      const commentsSnapshot = await getDocs(
++        query(
++          collection(db, "recipes", recipeDoc.id, "comments"),
++          where("userId", "==", userId),
++        ),
++      );
++      // Skip writes for comments that already carry the right name.
++      const stale = commentsSnapshot.docs.filter(
++        (comment) => comment.data().username !== username,
++      );
++      await Promise.all(
++        stale.map((comment) => updateDoc(comment.ref, { username })),
++      );
++      return stale.length;
++    }),
++  );
++  return perRecipe.reduce((total, count) => total + count, 0);
+ }
+ 
+ export async function createOrUpdateUser(
+   user: User,
+   extra: Record<string, unknown> = {},
+ ) {
+-  const username = String(extra.username ?? user.displayName ?? "Người dùng");
+-  const data = await upsertUserDocument(user, { ...extra, username });
+-  if (!user.isAnonymous) await updateCommentsForUsername(user.uid, username);
++  const { isNewUser, ...profileExtra } = extra;
++  const username = String(
++    profileExtra.username ?? user.displayName ?? "Người dùng",
++  );
++  const data = await upsertUserDocument(user, { ...profileExtra, username });
++  // Keeping old comments' usernames in sync scans every recipe, so it must not
++  // block sign-in/sign-up. Run it in the background and ignore failures.
++  // A brand-new account has no comments to update.
++  if (!user.isAnonymous && !isNewUser) {
++    void updateCommentsForUsername(user.uid, username).catch(() => {});
++  }
+   return data;
+ }
+ 
