@@ -37,12 +37,7 @@ export default function TopAdBanner() {
       <ins
         ref={adRef}
         className="adsbygoogle"
-        style={{
-          display: "block",
-          width: "fit-content",
-          height: "250px",
-          margin: "0 auto",
-        }}
+        style={{ display: "block", width: "100%", height: "250px" }}
         data-ad-client={ADSENSE_CLIENT_ID}
         data-ad-slot={ADSENSE_TOP_SLOT}
         data-ad-format="auto"
