@@ -32,6 +32,7 @@ type GeneratedRecipe = Pick<
   Recipe,
   "title" | "description" | "category" | "ingredients" | "steps"
 > & {
+  recipeYield?: string;
   nutrition?: NonNullable<Recipe["nutrition"]>;
 };
 
@@ -51,6 +52,7 @@ function EditorForm({
   const [ingredients, setIngredients] = useState("");
   const [steps, setSteps] = useState("");
   const [category, setCategory] = useState<Recipe["category"]>("Dinner");
+  const [recipeYield, setRecipeYield] = useState("");
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [transcriptInput, setTranscriptInput] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -78,6 +80,7 @@ function EditorForm({
         setIngredients(recipe.ingredients.join("\n"));
         setSteps(recipe.steps.join("\n"));
         setCategory(recipe.category);
+        setRecipeYield(recipe.recipeYield ?? "");
         setYoutubeUrl(recipe.youtubeUrl ?? "");
         setImageUrl(recipe.imageUrl ?? "");
         setNutrition(nutritionToForm(recipe.nutrition));
@@ -124,7 +127,7 @@ function EditorForm({
     if (
       hasExistingContent &&
       !window.confirm(
-        "AI sẽ thay thế tiêu đề, mô tả, nguyên liệu, cách làm, danh mục và dinh dưỡng hiện tại. Bạn muốn tiếp tục?",
+        "AI sẽ thay thế tiêu đề, mô tả, khẩu phần, nguyên liệu, cách làm, danh mục và dinh dưỡng hiện tại. Bạn muốn tiếp tục?",
       )
     ) {
       return;
@@ -173,6 +176,7 @@ function EditorForm({
       setTitle(recipe.title);
       setDescription(recipe.description);
       setCategory(recipe.category);
+      setRecipeYield(recipe.recipeYield?.trim() ?? "");
       setIngredients(recipe.ingredients.join("\n"));
       setSteps(recipe.steps.join("\n"));
       setNutrition(nutritionToForm(recipe.nutrition));
@@ -212,6 +216,7 @@ function EditorForm({
         title: title.trim(),
         description: description.trim(),
         category,
+        recipeYield: recipeYield.trim(),
         ingredients: ingredients
           .split("\n")
           .map((x) => x.trim())
@@ -314,6 +319,21 @@ function EditorForm({
                 placeholder="Chọn danh mục"
               />
             </label>
+            <label className="block">
+              <span className="form-label">
+                <Icon name="bowl" size={15} /> Khẩu phần{" "}
+                <span className="font-normal text-muted">
+                  (ví dụ: 4 hoặc 4 khẩu phần)
+                </span>
+              </span>
+              <input
+                value={recipeYield}
+                onChange={(e) => setRecipeYield(e.target.value)}
+                className="form-input"
+                maxLength={60}
+                placeholder="4 khẩu phần"
+              />
+            </label>
             <div className="block">
               <label htmlFor="recipe-youtube-url" className="form-label">
                 <Icon name="youtube" size={15} /> Video YouTube
@@ -333,8 +353,8 @@ function EditorForm({
                 placeholder="https://www.youtube.com/..."
               />
               <p className="mt-2 text-xs leading-5 text-muted">
-                AI đọc phụ đề video để soạn tiêu đề, mô tả, nguyên liệu, cách
-                làm và dinh dưỡng.
+                AI đọc phụ đề video để soạn tiêu đề, mô tả, khẩu phần, nguyên
+                liệu, cách làm và dinh dưỡng.
               </p>
             </div>
             <div className="md:col-span-2 rounded-2xl border border-border bg-cream/40 p-4 sm:p-5">
