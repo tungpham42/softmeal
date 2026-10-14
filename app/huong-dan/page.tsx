@@ -115,7 +115,7 @@ const sections: GuideSection[] = [
       "Reel thường ngắn và hay bỏ qua định lượng cụ thể, vì vậy hãy tự bổ sung những phần còn thiếu.",
       "Kiểm tra kỹ định lượng, quy trình và thông tin dinh dưỡng do AI đề xuất trước khi đăng công thức.",
     ],
-    action: { label: "Thêm công thức", href: "/them" },
+    action: { label: "Thêm công thức", href: "/cong-thuc/them" },
   },
   {
     icon: "comment",
@@ -153,7 +153,7 @@ export default function GuidePage() {
           <Link href="/" className="btn-outline-dark">
             <Icon name="search" size={17} /> Tìm món ăn
           </Link>
-          <Link href="/them" className="btn-outline-dark">
+          <Link href="/cong-thuc/them" className="btn-outline-dark">
             <Icon name="youtube" size={17} /> Tạo công thức bằng AI
           </Link>
         </div>
@@ -192,10 +192,10 @@ export default function GuidePage() {
               thiếu định lượng và thời gian nấu.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
-              <Link href="/them" className="btn-primary">
+              <Link href="/cong-thuc/them" className="btn-primary">
                 <Icon name="refresh" size={17} /> Bắt đầu tạo công thức
               </Link>
-              <Link href="/them" className="btn-secondary">
+              <Link href="/cong-thuc/them" className="btn-secondary">
                 <Icon name="plus" size={17} /> Tự nhập công thức
               </Link>
             </div>

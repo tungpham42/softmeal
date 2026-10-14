@@ -9,6 +9,20 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/them",
+        destination: "/cong-thuc/them",
+        permanent: true,
+      },
+      {
+        source: "/sua-cong-thuc/:slug",
+        destination: "/cong-thuc/:slug/sua",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

@@ -90,14 +90,14 @@ const features: Feature[] = [
     icon: "youtube",
     title: "Tạo công thức bằng AI",
     text: "Dán link video YouTube hoặc Facebook Reel để AI hỗ trợ soạn tiêu đề, mô tả, nguyên liệu và các bước nấu thành bản nháp. Nếu không lấy được phụ đề hoặc chú thích, bạn có thể bổ sung lời thoại hoặc nội dung mô tả; hãy kiểm tra kỹ trước khi lưu.",
-    href: "/them",
+    href: "/cong-thuc/them",
     linkLabel: "Tạo bản nháp bằng AI",
   },
   {
     icon: "plus",
     title: "Ghi lại món ngon của bạn",
     text: "Tự nhập công thức kèm ảnh, nguyên liệu, từng bước và video YouTube hoặc Facebook Reel để lưu giữ món ruột hoặc chia sẻ kinh nghiệm nấu ăn với cộng đồng.",
-    href: "/them",
+    href: "/cong-thuc/them",
     linkLabel: "Tự thêm công thức",
   },
   {
@@ -129,7 +129,7 @@ export default function AboutPage() {
           <Link href="/" className="btn-gold">
             <Icon name="search" size={17} /> Khám phá công thức
           </Link>
-          <Link href="/them" className="btn-outline-dark">
+          <Link href="/cong-thuc/them" className="btn-outline-dark">
             <Icon name="youtube" size={17} /> Tạo công thức bằng AI
           </Link>
           <Link href="/lien-he" className="btn-outline-dark">
@@ -201,7 +201,7 @@ export default function AboutPage() {
               dưỡng trước khi lưu công thức.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
-              <Link href="/them" className="btn-primary">
+              <Link href="/cong-thuc/them" className="btn-primary">
                 <Icon name="refresh" size={17} /> Tạo công thức bằng AI
               </Link>
               <Link href="/huong-dan" className="btn-secondary">
@@ -291,10 +291,10 @@ export default function AboutPage() {
           {SITE_NAME} ngày càng hữu ích hơn cho người yêu nấu ăn.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <Link href="/them" className="btn-primary">
+          <Link href="/cong-thuc/them" className="btn-primary">
             <Icon name="youtube" size={17} /> Tạo công thức bằng AI
           </Link>
-          <Link href="/them" className="btn-secondary">
+          <Link href="/cong-thuc/them" className="btn-secondary">
             <Icon name="plus" size={17} /> Tự thêm công thức
           </Link>
           <Link href="/lien-he" className="btn-secondary">

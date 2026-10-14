@@ -429,7 +429,7 @@ export default function RecipeDetail({
 
                   <div className="mt-3 flex flex-wrap gap-2">
                     <Link
-                      href={`/sua-cong-thuc/${recipe.slug}`}
+                      href={`/cong-thuc/${recipe.slug}/sua`}
                       className="btn-secondary"
                     >
                       <Icon name="edit" size={15} />

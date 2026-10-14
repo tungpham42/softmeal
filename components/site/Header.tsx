@@ -132,7 +132,7 @@ export default function Header() {
                   <Link href="/ho-so" {...closeAccount} className="menu-link">
                     <Icon name="user" size={16} /> Hồ sơ
                   </Link>
-                  <Link href="/them" {...closeAccount} className="menu-link">
+                  <Link href="/cong-thuc/them" {...closeAccount} className="menu-link">
                     <Icon name="plus" size={16} /> Thêm công thức
                   </Link>
                   {isAdmin && (
@@ -222,7 +222,7 @@ export default function Header() {
                   <Icon name="user" size={18} /> Hồ sơ
                 </Link>
                 <Link
-                  href="/them"
+                  href="/cong-thuc/them"
                   {...closeMobile}
                   className="flex items-center gap-3 rounded-xl px-3 py-3 font-semibold text-ivory/90 hover:bg-ivory/10"
                 >

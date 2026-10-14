@@ -263,7 +263,7 @@ function ProfileInner() {
           ) : (
             <div className="mt-5 rounded-2xl bg-cream/60 p-5 text-center text-sm text-muted">
               Bạn chưa chia sẻ công thức nào.{" "}
-              <Link href="/them" className="font-bold text-lacquer underline">
+              <Link href="/cong-thuc/them" className="font-bold text-lacquer underline">
                 Thêm món đầu tiên
               </Link>
               .

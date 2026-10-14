@@ -57,7 +57,7 @@ export default function RecipeCard({
           {admin && (
             <div className="flex gap-2">
               <Link
-                href={`/sua-cong-thuc/${recipe.slug}`}
+                href={`/cong-thuc/${recipe.slug}/sua`}
                 className="icon-button"
                 aria-label="Chỉnh sửa"
               >

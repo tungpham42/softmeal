@@ -71,7 +71,7 @@ export default function HomePage() {
 
             {/* Button 2: Ivory / Share Recipe — Soft Pearl Shimmer */}
             <Link
-              href="/them"
+              href="/cong-thuc/them"
               className="group relative inline-flex items-center justify-center gap-3 overflow-hidden rounded-full border-2 border-ivory/60 bg-ivory/10 py-3.5 pl-7 pr-3.5 text-base font-extrabold text-ivory shadow-[0_8px_24px_-8px_rgba(0,0,0,0.45)] backdrop-blur-md transition duration-300 hover:-translate-y-0.5 hover:border-ivory hover:bg-ivory hover:text-lacquer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ivory/50 active:translate-y-0 active:scale-[0.98]"
             >
               <span

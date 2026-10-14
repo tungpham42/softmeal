@@ -902,7 +902,7 @@ export default function WeeklySuggestions() {
           Chưa có công thức để xếp món. Hãy thêm vài món vào sổ tay, rồi quay
           lại để tự động lên thực đơn, gom nguyên liệu và xem dinh dưỡng.
         </p>
-        <Link href="/them" className="btn-primary mt-5 inline-flex">
+        <Link href="/cong-thuc/them" className="btn-primary mt-5 inline-flex">
           Thêm công thức
         </Link>
       </div>
