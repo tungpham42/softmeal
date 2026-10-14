@@ -5,7 +5,7 @@ import { SITE_NAME } from "@/lib/seo";
 
 const description =
   SITE_NAME +
-  " giúp bạn khám phá công thức món ăn, tạo bản nháp công thức bằng AI từ video YouTube, lên thực đơn tuần, chuẩn bị danh sách đi chợ và lưu giữ những câu chuyện quanh mâm cơm Việt.";
+  " giúp bạn khám phá công thức món ăn, tạo bản nháp công thức bằng AI từ video YouTube hoặc Facebook Reel, lên thực đơn tuần, chuẩn bị danh sách đi chợ và lưu giữ những câu chuyện quanh mâm cơm Việt.";
 
 export const metadata: Metadata = {
   title: "Giới thiệu",
@@ -82,21 +82,21 @@ const features: Feature[] = [
   {
     icon: "book",
     title: "Nấu theo từng bước",
-    text: "Theo dõi nguyên liệu và cách làm, xem video nếu có, tham khảo thông tin dinh dưỡng được cung cấp và tìm món liên quan.",
+    text: "Theo dõi nguyên liệu và cách làm, xem video YouTube hoặc Facebook Reel nếu có, tham khảo thông tin dinh dưỡng được cung cấp và tìm món liên quan.",
     href: "/huong-dan",
     linkLabel: "Xem hướng dẫn",
   },
   {
     icon: "youtube",
     title: "Tạo công thức bằng AI",
-    text: "Dán link video YouTube để AI hỗ trợ soạn tiêu đề, mô tả, nguyên liệu và các bước nấu thành bản nháp. Nếu không lấy được phụ đề, bạn có thể bổ sung lời thoại hoặc nội dung mô tả; hãy kiểm tra kỹ trước khi lưu.",
+    text: "Dán link video YouTube hoặc Facebook Reel để AI hỗ trợ soạn tiêu đề, mô tả, nguyên liệu và các bước nấu thành bản nháp. Nếu không lấy được phụ đề hoặc chú thích, bạn có thể bổ sung lời thoại hoặc nội dung mô tả; hãy kiểm tra kỹ trước khi lưu.",
     href: "/them",
     linkLabel: "Tạo bản nháp bằng AI",
   },
   {
     icon: "plus",
     title: "Ghi lại món ngon của bạn",
-    text: "Tự nhập công thức kèm ảnh, nguyên liệu, từng bước và video YouTube để lưu giữ món ruột hoặc chia sẻ kinh nghiệm nấu ăn với cộng đồng.",
+    text: "Tự nhập công thức kèm ảnh, nguyên liệu, từng bước và video YouTube hoặc Facebook Reel để lưu giữ món ruột hoặc chia sẻ kinh nghiệm nấu ăn với cộng đồng.",
     href: "/them",
     linkLabel: "Tự thêm công thức",
   },
@@ -147,8 +147,9 @@ export default function AboutPage() {
           <p>
             Có những ngày ta biết mình muốn ăn ngon nhưng chưa nghĩ ra món gì.
             Có ngày đã chọn được món nhưng lại quên mất cần mua những nguyên
-            liệu nào. Và đôi khi, công thức gia đình chỉ nằm trong trí nhớ hoặc
-            một đoạn tin nhắn cũ.
+            liệu nào. Và đôi khi, công thức gia đình chỉ nằm trong trí nhớ, một
+            đoạn tin nhắn cũ, hay một Reel nấu ăn trên Facebook mà bạn từng xem
+            rồi không tìm lại được.
           </p>
           <p>
             {SITE_NAME} được định hướng để nối các việc ấy thành một hành trình
@@ -182,18 +183,22 @@ export default function AboutPage() {
               id="about-ai-title"
               className="mt-2 font-serif text-2xl font-bold text-lacquer sm:text-3xl"
             >
-              Biến video nấu ăn thành bản nháp công thức với AI
+              Biến video nấu ăn và Facebook Reel thành bản nháp công thức với AI
             </h2>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
-              Không cần bắt đầu từ trang giấy trắng: nhập link YouTube để AI hỗ
-              trợ phác thảo mô tả món ăn, nguyên liệu và các bước chế biến. Bạn
-              cũng có thể dán lời thoại hoặc mô tả thủ công khi phụ đề không
-              truy cập được.
+              Không cần bắt đầu từ trang giấy trắng: nhập link YouTube hoặc
+              Facebook Reel để AI hỗ trợ phác thảo mô tả món ăn, nguyên liệu và
+              các bước chế biến. Thấy món ngon trong một Reel? Hãy dán link vào
+              trước khi nó trôi mất khỏi bảng tin. Bạn cũng có thể dán lời
+              thoại, chú thích hoặc mô tả thủ công khi phụ đề không truy cập
+              được.
             </p>
             <p className="mt-2 max-w-3xl text-sm leading-7 text-muted">
-              Nội dung tạo ra chưa được đăng tự động. Người nấu vẫn là người
-              quyết định cuối cùng: hãy kiểm tra định lượng, độ hợp lý của các
-              bước và thông tin dinh dưỡng trước khi lưu công thức.
+              Reel thường ngắn và hay lược bớt định lượng cụ thể, nên bản nháp
+              có thể kém đầy đủ hơn so với video dài. Nội dung tạo ra chưa được
+              đăng tự động. Người nấu vẫn là người quyết định cuối cùng: hãy
+              kiểm tra định lượng, độ hợp lý của các bước và thông tin dinh
+              dưỡng trước khi lưu công thức.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <Link href="/them" className="btn-primary">

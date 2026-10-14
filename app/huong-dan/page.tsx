@@ -6,7 +6,7 @@ import { SITE_NAME } from "@/lib/seo";
 const description =
   "Hướng dẫn sử dụng " +
   SITE_NAME +
-  ": tìm công thức, tạo bản nháp món ăn bằng AI từ video YouTube, lên thực đơn tuần, chuẩn bị danh sách đi chợ và xem thông tin dinh dưỡng.";
+  ": tìm công thức, tạo bản nháp món ăn bằng AI từ video YouTube hoặc Facebook Reel, lên thực đơn tuần, chuẩn bị danh sách đi chợ và xem thông tin dinh dưỡng.";
 
 export const metadata: Metadata = {
   title: "Hướng dẫn sử dụng",
@@ -58,7 +58,7 @@ const sections: GuideSection[] = [
     icon: "book",
     title: "Mở công thức và nấu từng bước",
     intro:
-      "Mỗi trang công thức là một sổ tay nấu ăn: bạn có thể kiểm tra nguyên liệu, theo dõi cách làm và xem video nếu tác giả có thêm liên kết.",
+      "Mỗi trang công thức là một sổ tay nấu ăn: bạn có thể kiểm tra nguyên liệu, theo dõi cách làm và xem video YouTube hoặc Facebook Reel nếu tác giả có thêm liên kết.",
     steps: [
       "Đọc phần mô tả và chuẩn bị đủ nguyên liệu trước khi bắt đầu.",
       "Đánh dấu nguyên liệu và từng bước khi đã chuẩn bị xong hoặc hoàn thành.",
@@ -106,12 +106,13 @@ const sections: GuideSection[] = [
     icon: "plus",
     title: "Đăng công thức hoặc tạo bản nháp bằng AI",
     intro:
-      "Bạn có thể ghi lại món ăn của gia đình, thêm hình ảnh và liên kết video YouTube. AI hỗ trợ soạn bản nháp từ video để bạn tiết kiệm thời gian.",
+      "Bạn có thể ghi lại món ăn của gia đình, thêm hình ảnh và liên kết YouTube hoặc Facebook Reel. AI hỗ trợ soạn bản nháp từ video hoặc Reel để bạn tiết kiệm thời gian.",
     steps: [
       "Mở mục Thêm công thức và đăng nhập hoặc tạo tài khoản nếu được yêu cầu.",
       "Nhập tên món, mô tả, danh mục; mỗi nguyên liệu và mỗi bước nấu nên đặt trên một dòng riêng.",
-      "Dán liên kết YouTube rồi chọn Tạo công thức bằng AI. Nội dung được tạo là bản nháp, chưa được đăng cho đến khi bạn chủ động lưu.",
-      "Nếu máy chủ không lấy được phụ đề, hãy dán lời thoại hoặc nội dung mô tả vào ô tương ứng. Không phải video nào cũng có thể đọc phụ đề tự động.",
+      "Dán liên kết YouTube hoặc Facebook Reel rồi chọn Tạo công thức bằng AI. Nội dung được tạo là bản nháp, chưa được đăng cho đến khi bạn chủ động lưu.",
+      "Nếu máy chủ không lấy được phụ đề hoặc chú thích, hãy dán lời thoại hoặc nội dung mô tả vào ô tương ứng. Không phải video hay Reel nào cũng có thể đọc nội dung tự động, và Reel ở chế độ riêng tư hoặc bị hạn chế sẽ không truy cập được.",
+      "Reel thường ngắn và hay bỏ qua định lượng cụ thể, vì vậy hãy tự bổ sung những phần còn thiếu.",
       "Kiểm tra kỹ định lượng, quy trình và thông tin dinh dưỡng do AI đề xuất trước khi đăng công thức.",
     ],
     action: { label: "Thêm công thức", href: "/them" },
@@ -142,8 +143,8 @@ export default function GuidePage() {
         </h1>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-ivory/85 sm:text-lg sm:leading-8">
           {SITE_NAME} giúp bạn khám phá món ngon, sắp xếp bữa ăn, chuẩn bị
-          nguyên liệu và vào bếp dễ dàng hơn — từng bước một, không cần lập
-          kế hoạch trên nhiều nơi khác nhau.
+          nguyên liệu và vào bếp dễ dàng hơn — từng bước một, không cần lập kế
+          hoạch trên nhiều nơi khác nhau.
         </p>
         <div className="mt-7 flex flex-wrap gap-3">
           <Link href="/goi-y" className="btn-gold">
@@ -158,7 +159,10 @@ export default function GuidePage() {
         </div>
       </section>
 
-      <section className="rounded-[2rem] border border-gold/30 bg-gold/10 p-6 sm:p-8" aria-labelledby="ai-recipe-title">
+      <section
+        className="rounded-[2rem] border border-gold/30 bg-gold/10 p-6 sm:p-8"
+        aria-labelledby="ai-recipe-title"
+      >
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
           <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-gold/25 text-lacquer">
             <Icon name="youtube" size={23} />
@@ -167,20 +171,25 @@ export default function GuidePage() {
             <span className="eyebrow">
               <Icon name="refresh" size={15} /> Công cụ hỗ trợ bằng AI
             </span>
-            <h2 id="ai-recipe-title" className="mt-2 font-serif text-2xl font-bold text-lacquer sm:text-3xl">
-              Tạo công thức bằng AI từ video YouTube
+            <h2
+              id="ai-recipe-title"
+              className="mt-2 font-serif text-2xl font-bold text-lacquer sm:text-3xl"
+            >
+              Tạo công thức bằng AI từ video YouTube và Facebook Reel
             </h2>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
-              Dán đường dẫn video để AI hỗ trợ soạn tiêu đề, mô tả, nguyên liệu,
-              các bước chế biến và thông tin dinh dưỡng khi có dữ liệu phù hợp.
-              Nếu máy chủ không lấy được phụ đề, bạn có thể dán lời thoại hoặc
-              nội dung mô tả vào ô ghi chú để làm nguồn tham khảo.
+              Dán đường dẫn video YouTube hoặc Facebook Reel để AI hỗ trợ soạn
+              tiêu đề, mô tả, nguyên liệu, các bước chế biến và thông tin dinh
+              dưỡng khi có dữ liệu phù hợp. Nếu máy chủ không lấy được phụ đề
+              hoặc chú thích, bạn có thể dán lời thoại hoặc nội dung mô tả vào ô
+              ghi chú để làm nguồn tham khảo.
             </p>
             <p className="mt-2 max-w-3xl text-sm leading-7 text-muted">
               Kết quả chỉ là bản nháp trong biểu mẫu, không tự động đăng. Hãy
               kiểm tra nguồn, định lượng, cách nấu và các ước tính dinh dưỡng
-              trước khi lưu; AI không thể bảo đảm mọi chi tiết trong video đều
-              được trích xuất chính xác.
+              trước khi lưu; AI không thể bảo đảm mọi chi tiết trong video hay
+              Reel đều được trích xuất chính xác. Đặc biệt, Reel ngắn có thể
+              thiếu định lượng và thời gian nấu.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <Link href="/them" className="btn-primary">
@@ -203,8 +212,8 @@ export default function GuidePage() {
             Dùng {SITE_NAME} theo cách của bạn
           </h2>
           <p className="mt-2 max-w-3xl text-sm leading-7 text-muted">
-            Bạn không cần làm theo thứ tự. Hãy mở đúng tính năng đang cần:
-            tìm một món nhanh, chuẩn bị bữa tối hay lên kế hoạch cho cả tuần.
+            Bạn không cần làm theo thứ tự. Hãy mở đúng tính năng đang cần: tìm
+            một món nhanh, chuẩn bị bữa tối hay lên kế hoạch cho cả tuần.
           </p>
         </div>
 
