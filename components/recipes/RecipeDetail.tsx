@@ -8,6 +8,7 @@ import Icon from "@/components/ui/Icon";
 import Alert from "@/components/ui/Alert";
 import { categoryAccent, categoryLabel } from "@/lib/category";
 import { youtubeEmbedUrl } from "@/lib/youtube";
+import { facebookEmbedUrl, facebookSourceUrl } from "@/lib/facebook";
 import RecipeImage from "@/components/recipe/RecipeImage";
 import { nutritionRows } from "@/lib/nutrition";
 import { formatRecipeYield } from "@/lib/recipeYield";
@@ -18,7 +19,6 @@ import RecipeComments from "@/components/recipes/RecipeComments";
 import { getYouTubeSourceUrl } from "@/lib/recipes/youtube-source";
 import { useRecipeComments } from "@/hooks/useRecipeComments";
 import { useRecipeViewCount } from "@/hooks/useRecipeViewCount";
-
 
 export default function RecipeDetail({
   initialData,
@@ -84,10 +84,23 @@ export default function RecipeDetail({
     [recipe?.youtubeUrl],
   );
 
+  // The stored video link may also be a Facebook Reel/video.
+  const facebookEmbed = useMemo(
+    () => (embed ? null : facebookEmbedUrl(recipe?.youtubeUrl)),
+    [embed, recipe?.youtubeUrl],
+  );
+
+  const facebookSource = useMemo(
+    () => (youtubeSourceUrl ? null : facebookSourceUrl(recipe?.youtubeUrl)),
+    [youtubeSourceUrl, recipe?.youtubeUrl],
+  );
+
+  const sourceUrl = youtubeSourceUrl ?? facebookSource;
+  const sourceLabel = facebookSource ? "Facebook" : "YouTube";
+
   const relatedItems = related.slice((relatedPage - 1) * 3, relatedPage * 3);
 
   const relatedPages = Math.max(1, Math.ceil(related.length / 3));
-
 
   if (!recipe) {
     return (
@@ -203,7 +216,28 @@ export default function RecipeDetail({
                 </section>
               )}
 
-              {youtubeSourceUrl && (
+              {facebookEmbed && (
+                <section className="mt-8">
+                  <h2 className="subheading">
+                    <Icon name="youtube" size={19} />
+                    Video hướng dẫn
+                  </h2>
+
+                  {/* Reels are portrait, so use a narrower 9:16 frame. */}
+                  <div className="mx-auto aspect-[9/16] max-w-sm overflow-hidden rounded-2xl border border-border bg-black">
+                    <iframe
+                      src={facebookEmbed}
+                      title={recipe.title}
+                      className="h-full w-full"
+                      loading="lazy"
+                      allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                      allowFullScreen
+                    />
+                  </div>
+                </section>
+              )}
+
+              {sourceUrl && (
                 <section
                   aria-labelledby="recipe-source-heading"
                   className="mt-8 rounded-2xl border border-border bg-cream/60 p-4 sm:p-5"
@@ -217,17 +251,18 @@ export default function RecipeDetail({
                   </h2>
 
                   <p className="mt-2 text-sm leading-6 text-muted">
-                    Công thức này tham khảo từ video YouTube gốc. Bạn có thể xem
-                    video để đối chiếu nguyên liệu và các bước thực hiện.
+                    Công thức này tham khảo từ video {sourceLabel} gốc. Bạn có
+                    thể xem video để đối chiếu nguyên liệu và các bước thực
+                    hiện.
                   </p>
 
                   <a
-                    href={youtubeSourceUrl}
+                    href={sourceUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-lacquer underline underline-offset-4 hover:text-lacquer/80"
                   >
-                    Xem video gốc trên YouTube
+                    Xem video gốc trên {sourceLabel}
                   </a>
 
                   <p className="mt-2 text-xs leading-5 text-muted">

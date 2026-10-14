@@ -20,6 +20,7 @@ import Alert, { LoadingBlock } from "@/components/ui/Alert";
 import ThemedSelect from "@/components/ui/ThemedSelect";
 import RequireAuth from "@/components/auth/RequireAuth";
 import { extractYouTubeId, resolveYouTubeThumbnail } from "@/lib/youtube";
+import { extractFacebookVideoUrl } from "@/lib/facebook";
 import {
   EMPTY_NUTRITION_FORM,
   NUTRITION_FIELDS,
@@ -35,6 +36,13 @@ type GeneratedRecipe = Pick<
   recipeYield?: string;
   nutrition?: NonNullable<Recipe["nutrition"]>;
 };
+
+/** Turns a data: URL (from the server-fetched Reel thumbnail) into an uploadable File. */
+async function dataUrlToFile(dataUrl: string, name: string): Promise<File> {
+  const blob = await (await fetch(dataUrl)).blob();
+  const extension = blob.type.split("/")[1] || "jpg";
+  return new File([blob], `${name}.${extension}`, { type: blob.type });
+}
 
 function EditorForm({
   mode,
@@ -114,9 +122,9 @@ function EditorForm({
       setError("Vui lòng đăng nhập trước khi tạo công thức bằng AI.");
       return;
     }
-    if (!extractYouTubeId(youtubeUrl)) {
+    if (!extractYouTubeId(youtubeUrl) && !extractFacebookVideoUrl(youtubeUrl)) {
       setError(
-        "Hãy nhập đường dẫn video YouTube hợp lệ trước khi tạo nội dung.",
+        "Hãy nhập đường dẫn video YouTube hoặc Reel Facebook hợp lệ trước khi tạo nội dung.",
       );
       return;
     }
@@ -146,7 +154,7 @@ function EditorForm({
           Authorization: `Bearer ${idToken}`,
         },
         body: JSON.stringify({
-          youtubeUrl: youtubeUrl.trim(),
+          videoUrl: youtubeUrl.trim(),
           transcript: transcriptInput.trim(),
         }),
       });
@@ -157,6 +165,8 @@ function EditorForm({
           videoTitle?: string;
           channel?: string;
           transcriptLanguage?: string;
+          platform?: "youtube" | "facebook";
+          thumbnailDataUrl?: string | null;
         };
       };
       if (!response.ok) {
@@ -180,8 +190,20 @@ function EditorForm({
       setIngredients(recipe.ingredients.join("\n"));
       setSteps(recipe.steps.join("\n"));
       setNutrition(nutritionToForm(recipe.nutrition));
+      // Reel Facebook không có URL ảnh bìa công khai, nên máy chủ gửi kèm ảnh xem trước.
+      // Chỉ điền ảnh món ăn khi người dùng chưa chọn hoặc dán ảnh riêng.
+      const thumbnail = result.source?.thumbnailDataUrl;
+      if (
+        typeof thumbnail === "string" &&
+        thumbnail.startsWith("data:image/") &&
+        !imageFile &&
+        (!imageUrl.trim() || imageAuto)
+      ) {
+        setImageUrl(thumbnail);
+        setImageAuto(true);
+      }
       setAiMessage(
-        `Đã tạo bản nháp${result.source?.videoTitle ? ` từ video “${result.source.videoTitle}”` : " từ video YouTube"}. Hãy kiểm tra định lượng, cách làm và các ước tính dinh dưỡng trước khi lưu.`,
+        `Đã tạo bản nháp${result.source?.videoTitle ? ` từ video “${result.source.videoTitle}”` : result.source?.platform === "facebook" ? " từ Reel Facebook" : " từ video YouTube"}. Hãy kiểm tra định lượng, cách làm và các ước tính dinh dưỡng trước khi lưu.`,
       );
     } catch (err) {
       setError(
@@ -211,7 +233,13 @@ function EditorForm({
       })();
 
       let finalImage = imageUrl.trim();
-      if (imageFile) finalImage = await uploadImageToCloudinary(imageFile);
+      if (imageFile) {
+        finalImage = await uploadImageToCloudinary(imageFile);
+      } else if (finalImage.startsWith("data:image/")) {
+        finalImage = await uploadImageToCloudinary(
+          await dataUrlToFile(finalImage, "facebook-reel-thumbnail"),
+        );
+      }
       const payload: Partial<Recipe> = {
         title: title.trim(),
         description: description.trim(),
@@ -261,7 +289,8 @@ function EditorForm({
         </h1>
         <p className="text-sm leading-6 text-muted">
           Ghi lại món ngon theo cách dễ đọc, dễ nấu và dễ truyền lại cho người
-          thân. Bạn cũng có thể tạo bản nháp từ video YouTube bằng AI.
+          thân. Bạn cũng có thể tạo bản nháp từ video YouTube hoặc Reel Facebook
+          bằng AI.
         </p>
       </div>
       <div className="rounded-[2rem] border border-border bg-card p-5 shadow-sm sm:p-8">
@@ -336,7 +365,8 @@ function EditorForm({
             </label>
             <div className="block">
               <label htmlFor="recipe-youtube-url" className="form-label">
-                <Icon name="youtube" size={15} /> Video YouTube
+                <Icon name="youtube" size={15} /> Liên kết video (YouTube hoặc
+                Reel Facebook)
               </label>
               <input
                 id="recipe-youtube-url"
@@ -350,11 +380,11 @@ function EditorForm({
                   }
                 }}
                 className="form-input"
-                placeholder="https://www.youtube.com/..."
+                placeholder="https://www.youtube.com/... hoặc https://www.facebook.com/reel/..."
               />
               <p className="mt-2 text-xs leading-5 text-muted">
-                AI đọc phụ đề video để soạn tiêu đề, mô tả, khẩu phần, nguyên
-                liệu, cách làm và dinh dưỡng.
+                AI đọc phụ đề YouTube (hoặc chú thích của Reel Facebook) để soạn
+                tiêu đề, mô tả, khẩu phần, nguyên liệu, cách làm và dinh dưỡng.
               </p>
             </div>
             <div className="md:col-span-2 rounded-2xl border border-border bg-cream/40 p-4 sm:p-5">
@@ -391,7 +421,7 @@ function EditorForm({
                   onChange={(e) => setTranscriptInput(e.target.value)}
                   className="form-input min-h-24"
                   maxLength={60000}
-                  placeholder="Để trống để AI tự lấy phụ đề YouTube. Nếu video không có phụ đề hoặc máy chủ không đọc được, hãy dán lời thoại/mô tả vào đây."
+                  placeholder="Để trống để AI tự lấy phụ đề YouTube hoặc chú thích Reel Facebook. Nếu video không có phụ đề hoặc máy chủ không đọc được (Reel Facebook thường cần cách này), hãy dán lời thoại/công thức vào đây."
                 />
                 <span className="mt-1 block text-xs text-muted">
                   {transcriptInput.length.toLocaleString("vi-VN")} / 60.000 ký
@@ -486,7 +516,7 @@ function EditorForm({
                   className="file-input"
                 />
                 <input
-                  value={imageUrl}
+                  value={imageUrl.startsWith("data:") ? "" : imageUrl}
                   onChange={(e) => {
                     setImageUrl(e.target.value);
                     setImageAuto(false);
@@ -507,8 +537,8 @@ function EditorForm({
               )}
               <span className="mt-2 block text-xs text-muted">
                 {imageAuto
-                  ? "Đang dùng ảnh bìa của video YouTube. Chọn ảnh khác hoặc dán URL để thay thế."
-                  : "Ảnh mới sẽ được tải lên Cloudinary bằng unsigned upload preset; URL sẽ được giữ nguyên khi bạn dán ảnh có sẵn. Nếu để trống và có link YouTube, ảnh bìa video sẽ được dùng tự động."}
+                  ? "Đang dùng ảnh bìa của video. Chọn ảnh khác hoặc dán URL để thay thế."
+                  : "Ảnh mới sẽ được tải lên Cloudinary bằng unsigned upload preset; URL sẽ được giữ nguyên khi bạn dán ảnh có sẵn. Nếu để trống, ảnh bìa YouTube sẽ được dùng tự động; với Reel Facebook, ảnh xem trước được thêm khi bạn tạo công thức bằng AI."}
               </span>
             </div>
           </div>

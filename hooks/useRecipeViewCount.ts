@@ -10,11 +10,11 @@ export function useRecipeViewCount(
   recipeId: string | undefined,
   initialViews = 0,
 ): number {
-  const [views, setViews] = useState(initialViews);
-
-  useEffect(() => {
-    setViews(initialViews);
-  }, [recipeId, initialViews]);
+  const [viewState, setViewState] = useState({
+    recipeId,
+    initialViews,
+    views: initialViews,
+  });
 
   useEffect(() => {
     if (!recipeId) return;
@@ -35,7 +35,7 @@ export function useRecipeViewCount(
       .then((response) => (response.ok ? response.json() : null))
       .then((data: { views?: number } | null) => {
         if (typeof data?.views !== "number") return;
-        setViews(data.views);
+        setViewState({ recipeId, initialViews, views: data.views });
         try {
           window.sessionStorage.setItem(storageKey, "1");
         } catch {
@@ -47,7 +47,10 @@ export function useRecipeViewCount(
       });
 
     return () => controller.abort();
-  }, [recipeId]);
+  }, [recipeId, initialViews]);
 
-  return views;
+  return viewState.recipeId === recipeId &&
+    viewState.initialViews === initialViews
+    ? viewState.views
+    : initialViews;
 }
