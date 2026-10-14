@@ -21,7 +21,7 @@
 @theme inline {
   --font-serif: var(--font-merriweather), Georgia, "Times New Roman", serif;
   --font-sans:
-    var(--font-montserrat), "Trebuchet MS", system-ui, -apple-system,
+    var(--font-lexend-deca), "Trebuchet MS", system-ui, -apple-system,
     BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 

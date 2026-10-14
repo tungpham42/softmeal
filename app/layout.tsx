@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Script from "next/script";
-import { Merriweather, Montserrat } from "next/font/google";
+import { Merriweather, Lexend_Deca } from "next/font/google";
 import { GoogleAnalytics, GoogleTagManager } from "@next/third-parties/google";
 import "./globals.css";
 import "@/styles/themed-select.css";
@@ -20,10 +20,10 @@ const merriweather = Merriweather({
   variable: "--font-merriweather",
 });
 
-const montserrat = Montserrat({
+const lexendDeca = Lexend_Deca({
   subsets: ["latin", "vietnamese"],
   display: "swap",
-  variable: "--font-montserrat",
+  variable: "--font-lexend-deca",
 });
 
 export const metadata: Metadata = {
@@ -61,7 +61,7 @@ export default function RootLayout({
   return (
     <html
       lang="vi"
-      className={`${merriweather.variable} ${montserrat.variable}`}
+      className={`${merriweather.variable} ${lexendDeca.variable}`}
       suppressHydrationWarning
     >
       <body suppressHydrationWarning>
