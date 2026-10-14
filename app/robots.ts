@@ -19,7 +19,6 @@ export default function robots(): MetadataRoute.Robots {
         "/quan-tri",
         "/ho-so",
         "/cong-thuc/them",
-        "/sua-cong-thuc/",
         "/dang-nhap",
         "/dang-ky",
       ],
