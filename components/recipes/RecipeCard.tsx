@@ -21,7 +21,7 @@ export default function RecipeCard({
         <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-gold/20 via-cream to-bamboo/10">
           <RecipeImage
             imageUrl={recipe.imageUrl}
-            youtubeUrl={recipe.youtubeUrl}
+            videoUrl={recipe.videoUrl}
             alt={recipe.title}
             sizes="(max-width: 768px) 100vw, 33vw"
             className="object-cover transition duration-500 group-hover:scale-105"

@@ -62,6 +62,10 @@ export function normalizeRecipe(
   id: string,
   data: Record<string, unknown>,
 ): Recipe {
+  // `youtubeUrl` is the legacy Firestore field. Read it as a fallback so
+  // existing recipes continue to work after adopting the platform-neutral name.
+  const rawVideoUrl = data.videoUrl ?? data.youtubeUrl;
+
   return {
     id,
     title: String(data.title ?? "Untitled recipe"),
@@ -73,7 +77,7 @@ export function normalizeRecipe(
     steps: Array.isArray(data.steps) ? data.steps.map(String) : [],
     category: normalizeCategory(data.category),
     imageUrl: data.imageUrl ? String(data.imageUrl) : undefined,
-    youtubeUrl: data.youtubeUrl ? String(data.youtubeUrl) : undefined,
+    videoUrl: rawVideoUrl ? String(rawVideoUrl) : undefined,
     nutrition: normalizeNutrition(data.nutrition),
     recipeYield: normalizeRecipeYield(data.recipeYield ?? data.servings),
     userId: data.userId ? String(data.userId) : undefined,

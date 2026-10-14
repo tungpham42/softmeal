@@ -6,6 +6,7 @@ import { getRecipeYieldSchema } from "@/lib/recipeYield";
 import type { Recipe } from "@/lib/types";
 import { fetchRecipePageServer } from "@/lib/firebase/server";
 import { SITE_NAME, SITE_URL, RECIPE_PATH } from "@/lib/seo";
+import { videoEmbedUrl } from "@/lib/video";
 
 // One cached server fetch shared by generateMetadata, JSON-LD and the UI.
 const getRecipePage = cache((slug: string) => fetchRecipePageServer(slug));
@@ -218,15 +219,14 @@ function getYouTubeVideoId(value: string): string | undefined {
 }
 
 function getVideoEmbedUrl(value: string): string {
-  const videoId = getYouTubeVideoId(value);
-  return videoId ? `https://www.youtube.com/embed/${videoId}` : value;
+  return videoEmbedUrl(value) ?? value;
 }
 
 function getVideoThumbnailUrl(
-  youtubeUrl: string,
+  videoUrl: string,
   imageUrl: string | undefined,
 ): string | undefined {
-  const videoId = getYouTubeVideoId(youtubeUrl);
+  const videoId = getYouTubeVideoId(videoUrl);
 
   if (videoId) {
     return `https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/hqdefault.jpg`;
@@ -305,7 +305,7 @@ function RecipeJsonLd({ recipe }: { recipe: Recipe }) {
   const totalTime = getOptionalString(seoRecipe.totalTime);
   const recipeYield = getRecipeYieldSchema(recipe);
   const nutrition = getNutritionSchema(seoRecipe);
-  const youtubeUrl = getOptionalString(recipe.youtubeUrl);
+  const videoUrl = getOptionalString(recipe.videoUrl);
 
   const recipeInstructions = recipe.steps
     .map(cleanText)
@@ -342,15 +342,15 @@ function RecipeJsonLd({ recipe }: { recipe: Recipe }) {
           },
         }
       : {}),
-    ...(youtubeUrl
+    ...(videoUrl
       ? {
           video: {
             "@type": "VideoObject",
             name: cleanText(recipe.title),
             description: cleanText(recipe.description),
-            thumbnailUrl: getVideoThumbnailUrl(youtubeUrl, imageUrl),
+            thumbnailUrl: getVideoThumbnailUrl(videoUrl, imageUrl),
             ...(datePublished ? { uploadDate: datePublished } : {}),
-            embedUrl: getVideoEmbedUrl(youtubeUrl),
+            embedUrl: getVideoEmbedUrl(videoUrl),
             ...(canonical ? { url: `${canonical}#video` } : {}),
           },
         }

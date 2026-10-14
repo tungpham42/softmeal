@@ -4,6 +4,7 @@ import {
   addDoc,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -178,6 +179,7 @@ export async function deleteComment(recipeId: string, commentId: string) {
 export async function saveRecipe(recipeId: string, payload: Partial<Recipe>) {
   await updateDoc(doc(db, "recipes", recipeId), {
     ...payload,
+    youtubeUrl: deleteField(),
     updatedAt: new Date().toISOString(),
   });
 }

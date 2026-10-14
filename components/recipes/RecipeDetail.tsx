@@ -7,8 +7,11 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import Icon from "@/components/ui/Icon";
 import Alert from "@/components/ui/Alert";
 import { categoryAccent, categoryLabel } from "@/lib/category";
-import { youtubeEmbedUrl } from "@/lib/youtube";
-import { facebookEmbedUrl, facebookSourceUrl } from "@/lib/facebook";
+import {
+  getVideoPlatform,
+  normalizeVideoUrl,
+  videoEmbedUrl,
+} from "@/lib/video";
 import RecipeImage from "@/components/recipe/RecipeImage";
 import { nutritionRows } from "@/lib/nutrition";
 import { formatRecipeYield } from "@/lib/recipeYield";
@@ -16,7 +19,6 @@ import { SITE_NAME } from "@/lib/seo";
 import ShoppingPanel from "@/components/recipes/ShoppingPanel";
 import ShareLinks from "@/components/recipes/ShareLinks";
 import RecipeComments from "@/components/recipes/RecipeComments";
-import { getYouTubeSourceUrl } from "@/lib/recipes/youtube-source";
 import { useRecipeComments } from "@/hooks/useRecipeComments";
 import { useRecipeViewCount } from "@/hooks/useRecipeViewCount";
 
@@ -74,29 +76,11 @@ export default function RecipeDetail({
     });
   }
 
-  const embed = useMemo(
-    () => youtubeEmbedUrl(recipe?.youtubeUrl),
-    [recipe?.youtubeUrl],
-  );
-
-  const youtubeSourceUrl = useMemo(
-    () => getYouTubeSourceUrl(recipe?.youtubeUrl),
-    [recipe?.youtubeUrl],
-  );
-
-  // The stored video link may also be a Facebook Reel/video.
-  const facebookEmbed = useMemo(
-    () => (embed ? null : facebookEmbedUrl(recipe?.youtubeUrl)),
-    [embed, recipe?.youtubeUrl],
-  );
-
-  const facebookSource = useMemo(
-    () => (youtubeSourceUrl ? null : facebookSourceUrl(recipe?.youtubeUrl)),
-    [youtubeSourceUrl, recipe?.youtubeUrl],
-  );
-
-  const sourceUrl = youtubeSourceUrl ?? facebookSource;
-  const sourceLabel = facebookSource ? "Facebook" : "YouTube";
+  const videoUrl = recipe?.videoUrl;
+  const embed = useMemo(() => videoEmbedUrl(videoUrl), [videoUrl]);
+  const videoPlatform = useMemo(() => getVideoPlatform(videoUrl), [videoUrl]);
+  const sourceUrl = useMemo(() => normalizeVideoUrl(videoUrl), [videoUrl]);
+  const sourceLabel = videoPlatform === "facebook" ? "Facebook" : "YouTube";
 
   const relatedItems = related.slice((relatedPage - 1) * 3, relatedPage * 3);
 
@@ -136,7 +120,7 @@ export default function RecipeDetail({
         <div className="relative aspect-[16/8] bg-cream">
           <RecipeImage
             imageUrl={recipe.imageUrl}
-            youtubeUrl={recipe.youtubeUrl}
+            videoUrl={recipe.videoUrl}
             alt={recipe.title}
             priority
             sizes="100vw"
@@ -201,32 +185,24 @@ export default function RecipeDetail({
               {embed && (
                 <section className="mt-8">
                   <h2 className="subheading">
-                    <Icon name="youtube" size={19} />
+                    <Icon
+                      name={
+                        videoPlatform === "facebook" ? "facebook" : "youtube"
+                      }
+                      size={19}
+                    />
                     Video hướng dẫn
                   </h2>
 
-                  <div className="aspect-video overflow-hidden rounded-2xl border border-border bg-black">
+                  <div
+                    className={`overflow-hidden rounded-2xl border border-border bg-black ${
+                      videoPlatform === "facebook"
+                        ? "mx-auto aspect-[9/16] max-w-sm"
+                        : "aspect-video"
+                    }`}
+                  >
                     <iframe
                       src={embed}
-                      title={recipe.title}
-                      className="h-full w-full"
-                      allowFullScreen
-                    />
-                  </div>
-                </section>
-              )}
-
-              {facebookEmbed && (
-                <section className="mt-8">
-                  <h2 className="subheading">
-                    <Icon name="youtube" size={19} />
-                    Video hướng dẫn
-                  </h2>
-
-                  {/* Reels are portrait, so use a narrower 9:16 frame. */}
-                  <div className="mx-auto aspect-[9/16] max-w-sm overflow-hidden rounded-2xl border border-border bg-black">
-                    <iframe
-                      src={facebookEmbed}
                       title={recipe.title}
                       className="h-full w-full"
                       loading="lazy"
@@ -246,7 +222,13 @@ export default function RecipeDetail({
                     id="recipe-source-heading"
                     className="flex items-center gap-2 font-semibold text-ink"
                   >
-                    <Icon name="youtube" size={18} className="text-lacquer" />
+                    <Icon
+                      name={
+                        videoPlatform === "facebook" ? "facebook" : "youtube"
+                      }
+                      size={18}
+                      className="text-lacquer"
+                    />
                     Nguồn tham khảo
                   </h2>
 

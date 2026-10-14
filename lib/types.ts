@@ -38,7 +38,8 @@ export interface Recipe {
   steps: string[];
   category: RecipeCategory;
   imageUrl?: string;
-  youtubeUrl?: string;
+  /** Original source link for a YouTube video or Facebook video/Reel. */
+  videoUrl?: string;
   nutrition?: RecipeNutrition;
   /** Servings produced, e.g. "4" or "4 khẩu phần". Falls back to 1 serving. */
   recipeYield?: string;
