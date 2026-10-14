@@ -245,3 +245,12 @@ button {
 ::-webkit-scrollbar-corner {
   background: var(--color-cream);
 }
+
+/* Prevent iOS Safari from zooming when editing form fields */
+@media screen and (max-width: 767px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
