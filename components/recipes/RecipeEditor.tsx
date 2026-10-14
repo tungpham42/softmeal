@@ -124,7 +124,7 @@ function EditorForm({
     }
     if (!extractYouTubeId(youtubeUrl) && !extractFacebookVideoUrl(youtubeUrl)) {
       setError(
-        "Hãy nhập đường dẫn video YouTube hoặc Reel Facebook hợp lệ trước khi tạo nội dung.",
+        "Hãy nhập đường dẫn video YouTube hoặc Facebook Reel hợp lệ trước khi tạo nội dung.",
       );
       return;
     }
@@ -190,7 +190,7 @@ function EditorForm({
       setIngredients(recipe.ingredients.join("\n"));
       setSteps(recipe.steps.join("\n"));
       setNutrition(nutritionToForm(recipe.nutrition));
-      // Reel Facebook không có URL ảnh bìa công khai, nên máy chủ gửi kèm ảnh xem trước.
+      // Facebook Reel không có URL ảnh bìa công khai, nên máy chủ gửi kèm ảnh xem trước.
       // Chỉ điền ảnh món ăn khi người dùng chưa chọn hoặc dán ảnh riêng.
       const thumbnail = result.source?.thumbnailDataUrl;
       if (
@@ -203,7 +203,7 @@ function EditorForm({
         setImageAuto(true);
       }
       setAiMessage(
-        `Đã tạo bản nháp${result.source?.videoTitle ? ` từ video “${result.source.videoTitle}”` : result.source?.platform === "facebook" ? " từ Reel Facebook" : " từ video YouTube"}. Hãy kiểm tra định lượng, cách làm và các ước tính dinh dưỡng trước khi lưu.`,
+        `Đã tạo bản nháp${result.source?.videoTitle ? ` từ video “${result.source.videoTitle}”` : result.source?.platform === "facebook" ? " từ Facebook Reel" : " từ video YouTube"}. Hãy kiểm tra định lượng, cách làm và các ước tính dinh dưỡng trước khi lưu.`,
       );
     } catch (err) {
       setError(
@@ -289,7 +289,7 @@ function EditorForm({
         </h1>
         <p className="text-sm leading-6 text-muted">
           Ghi lại món ngon theo cách dễ đọc, dễ nấu và dễ truyền lại cho người
-          thân. Bạn cũng có thể tạo bản nháp từ video YouTube hoặc Reel Facebook
+          thân. Bạn cũng có thể tạo bản nháp từ video YouTube hoặc Facebook Reel
           bằng AI.
         </p>
       </div>
@@ -366,7 +366,7 @@ function EditorForm({
             <div className="block">
               <label htmlFor="recipe-youtube-url" className="form-label">
                 <Icon name="youtube" size={15} /> Liên kết video (YouTube hoặc
-                Reel Facebook)
+                Facebook Reel)
               </label>
               <input
                 id="recipe-youtube-url"
@@ -383,7 +383,7 @@ function EditorForm({
                 placeholder="https://www.youtube.com/... hoặc https://www.facebook.com/reel/..."
               />
               <p className="mt-2 text-xs leading-5 text-muted">
-                AI đọc phụ đề YouTube (hoặc chú thích của Reel Facebook) để soạn
+                AI đọc phụ đề YouTube (hoặc chú thích của Facebook Reel) để soạn
                 tiêu đề, mô tả, khẩu phần, nguyên liệu, cách làm và dinh dưỡng.
               </p>
             </div>
@@ -421,7 +421,7 @@ function EditorForm({
                   onChange={(e) => setTranscriptInput(e.target.value)}
                   className="form-input min-h-24"
                   maxLength={60000}
-                  placeholder="Để trống để AI tự lấy phụ đề YouTube hoặc chú thích Reel Facebook. Nếu video không có phụ đề hoặc máy chủ không đọc được (Reel Facebook thường cần cách này), hãy dán lời thoại/công thức vào đây."
+                  placeholder="Để trống để AI tự lấy phụ đề YouTube hoặc chú thích Facebook Reel. Nếu video không có phụ đề hoặc máy chủ không đọc được (Facebook Reel thường cần cách này), hãy dán lời thoại/công thức vào đây."
                 />
                 <span className="mt-1 block text-xs text-muted">
                   {transcriptInput.length.toLocaleString("vi-VN")} / 60.000 ký
@@ -538,7 +538,7 @@ function EditorForm({
               <span className="mt-2 block text-xs text-muted">
                 {imageAuto
                   ? "Đang dùng ảnh bìa của video. Chọn ảnh khác hoặc dán URL để thay thế."
-                  : "Ảnh mới sẽ được tải lên Cloudinary bằng unsigned upload preset; URL sẽ được giữ nguyên khi bạn dán ảnh có sẵn. Nếu để trống, ảnh bìa YouTube sẽ được dùng tự động; với Reel Facebook, ảnh xem trước được thêm khi bạn tạo công thức bằng AI."}
+                  : "Ảnh mới sẽ được tải lên Cloudinary bằng unsigned upload preset; URL sẽ được giữ nguyên khi bạn dán ảnh có sẵn. Nếu để trống, ảnh bìa YouTube sẽ được dùng tự động; với Facebook Reel, ảnh xem trước được thêm khi bạn tạo công thức bằng AI."}
               </span>
             </div>
           </div>
