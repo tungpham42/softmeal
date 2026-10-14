@@ -363,7 +363,7 @@ function EditorForm({
                 placeholder="4 khẩu phần"
               />
             </label>
-            <div className="block">
+            <div className="block md:col-span-2">
               <label htmlFor="recipe-youtube-url" className="form-label">
                 <Icon name="youtube" size={15} /> Liên kết video (YouTube hoặc
                 Facebook Reel)
