@@ -17,9 +17,9 @@
   --color-plum: #76505c;
 }
 
-/* Merriweather is loaded via next/font in layout.tsx (exposes --font-merriweather). */
+/* Vollkorn is loaded via next/font in layout.tsx (exposes --font-vollkorn). */
 @theme inline {
-  --font-serif: var(--font-merriweather), Georgia, "Times New Roman", serif;
+  --font-serif: var(--font-vollkorn), Georgia, "Times New Roman", serif;
   --font-sans:
     var(--font-lexend-deca), "Trebuchet MS", system-ui, -apple-system,
     BlinkMacSystemFont, "Segoe UI", sans-serif;

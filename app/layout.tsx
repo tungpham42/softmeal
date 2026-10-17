@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Script from "next/script";
-import { Merriweather, Lexend_Deca } from "next/font/google";
+import { Vollkorn, Lexend_Deca } from "next/font/google";
 import { GoogleAnalytics, GoogleTagManager } from "@next/third-parties/google";
 import "./globals.css";
 import "@/styles/themed-select.css";
@@ -14,10 +14,10 @@ import AlpineProvider from "@/components/site/AlpineProvider";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { SITE_NAME } from "@/lib/seo";
 
-const merriweather = Merriweather({
+const vollkorn = Vollkorn({
   subsets: ["latin", "vietnamese"],
   display: "swap",
-  variable: "--font-merriweather",
+  variable: "--font-vollkorn",
 });
 
 const lexendDeca = Lexend_Deca({
@@ -61,7 +61,7 @@ export default function RootLayout({
   return (
     <html
       lang="vi"
-      className={`${merriweather.variable} ${lexendDeca.variable}`}
+      className={`${vollkorn.variable} ${lexendDeca.variable}`}
       suppressHydrationWarning
     >
       <body suppressHydrationWarning>
