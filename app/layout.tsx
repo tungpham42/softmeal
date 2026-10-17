@@ -28,7 +28,7 @@ const lexendDeca = Lexend_Deca({
 
 export const metadata: Metadata = {
   title: {
-    default: `${SITE_NAME} — Món ăn & ký ức`,
+    default: `${SITE_NAME} — Công thức nấu ăn & Món ngon mỗi ngày`,
     template: `%s | ${SITE_NAME}`,
   },
   description: `Nền tảng chia sẻ công thức và gợi ý món ăn mang hương vị truyền thống Việt Nam.`,
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   ),
   openGraph: {
     title: {
-      default: `${SITE_NAME} — Món ăn & ký ức`,
+      default: `${SITE_NAME} — Công thức nấu ăn & Món ngon mỗi ngày`,
       template: `%s | ${SITE_NAME}`,
     },
     description: "Lưu giữ những món ngon và câu chuyện quanh mâm cơm Việt.",
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
         url: "/1200x630.jpg",
         width: 1200,
         height: 630,
-        alt: `${SITE_NAME} — Món ăn & ký ức`,
+        alt: `${SITE_NAME} — Công thức nấu ăn & Món ngon mỗi ngày`,
       },
     ],
   },
